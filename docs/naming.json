@@ -1,0 +1,42 @@
+{
+  "library":
+  {
+    "name": "SevenSeg-74HC595",
+    "version": "1.0.0",    
+    "description": "7 segment 4 digits LED display easy to use and powerful library for modules based on 74HC595 (or similar) shift registers chips. Developed for the cheap and popular '4-bit Led Digital Tube Module' (**_and for all the custom made displays as: GIANTS COUNTERS, TIMERS, PRICING DISPLAYS, etc._**)  based on two 74HC595 (or similar) shift registers, the main focus was set on: ease of use, flexibility and basic prevention of 'misrepresentation' errors."
+
+  },
+    
+    "repository":
+    {
+      "name": "SevenSegDisplaysRTOSLib",
+      "type": "git",
+      "url": "https://github.com/GabyGold67/SevenSegDisplaysRTOSLib"
+    },
+
+  "code files":
+  [
+    {
+      "name": "SevenSeg-74HC595.h",
+      "content": ""
+    },
+    {
+      "name": "SevenSeg-74HC595.cpp",
+      "content": ""
+    }
+  ],
+
+  "classes implemented":
+  [
+    {
+      "name": "SevenSeg74HC595",
+      "description": ""
+    },
+    {
+      "name": "ClickCounter",
+      "description": ""
+    }
+  ] ,
+    "frameworks": "Arduino",
+    "platforms": "espressif32"
+}
