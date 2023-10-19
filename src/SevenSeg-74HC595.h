@@ -3,8 +3,6 @@
 #include <Arduino.h>
 
 #define MAX_PTR_ARRAY 10
-// #define MIN_DISP_VALUE -999 //Will become an object attribute related to the DISPLAY_DIGITS new implementation as (-1)*(pow(10, (DISPLAY_DIGITS-1))-1)
-// #define MAX_DISP_VALUE 9999 //Will become an object attribute related to the DISPLAY_DIGITS new implementation as (pow(10, DISPLAY_DIGITS)-1)
 
 class SevenSeg74HC595 {
     static uint8_t displaysCount;

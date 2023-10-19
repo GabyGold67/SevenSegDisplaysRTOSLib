@@ -16,11 +16,11 @@ const uint8_t sclk {0}; // Board pin # of ESP32 WROOM-32 uPesy dev Board
 
 //Set of variables and constants needed just for Demo purposes
 int testNum{0};
-const int firstTest{-5};
-const int lastTest{0};
+const int firstTest{-5};  //-5
+const int lastTest{0}; //0
 bool testResult{};
 const long testTime{1800};
-unsigned long timer{xTaskGetTickCount() / portTICK_RATE_MS - (testTime + 1)};
+unsigned long timer{xTaskGetTickCount() / portTICK_PERIOD_MS - (testTime + 1)};
 
 //Display instance creation
 // Creating the instance of the display, the only parameters needed are
@@ -40,16 +40,15 @@ void loop()
   // A mishmash of tests for showing the library methods provided
   // Some of this tests try to display non supported values, to show the response of the methods.
   // These failed method calls will display "Er" + testNum to help to identify why this message was set.
-  
-  
-  if ((xTaskGetTickCount() / portTICK_RATE_MS - timer) >= testTime)
+    
+  if ((xTaskGetTickCount() / portTICK_PERIOD_MS - timer) >= testTime)
   {
     // time to change the test
     testNum++;
-    if (testNum == firstTest)
+    if (testNum == firstTest){
       //Attaching the display refresh to an ISR trough the begin() method
       myLedDisp.begin();
-
+    }
     switch (testNum)
     {
     case -5:
@@ -177,10 +176,8 @@ void loop()
       {
         testResult = myLedDisp.print(i);
         vTaskDelay(20/portTICK_PERIOD_MS);
-        //delay(20);
       }
 
-      // delay(1000);
       vTaskDelay(1000/portTICK_PERIOD_MS);
 
       //Alignment: right
@@ -189,10 +186,8 @@ void loop()
       {
         testResult = myLedDisp.print(i, true);
          vTaskDelay(20/portTICK_PERIOD_MS);
-         //   delay(20);
       }
 
-      // delay(1000);
       vTaskDelay(1000/portTICK_PERIOD_MS);
 
       //Alignment: left
@@ -200,13 +195,11 @@ void loop()
       for (int i{-150}; i < 151; i++)
       {
          testResult = myLedDisp.print(i, false, true);
-      //   delay(20);
          vTaskDelay(20/portTICK_PERIOD_MS);
 
       }
 
-      // delay(1000);
-        vTaskDelay(1000/portTICK_PERIOD_MS);
+      vTaskDelay(1000/portTICK_PERIOD_MS);
 
       //Alignment: right
       //Zero Padding: Yes
@@ -224,12 +217,10 @@ void loop()
       for (int i{950}; i < 1051; i++)
       {
         testResult = myLedDisp.print(i);
-      //   delay(20);
-         vTaskDelay(20/portTICK_PERIOD_MS);
+        vTaskDelay(20/portTICK_PERIOD_MS);
       }
       
       vTaskDelay(1000/portTICK_PERIOD_MS);
-      // delay(1000);
       
       //Alignment: right
       //Zero Padding: No
@@ -240,7 +231,6 @@ void loop()
          vTaskDelay(20/portTICK_PERIOD_MS);
 }
       
-      // delay(1000);
       vTaskDelay(1000/portTICK_PERIOD_MS);
 
       //Alignment: left
@@ -249,19 +239,16 @@ void loop()
       {
         testResult = myLedDisp.print(i, false, true);
         vTaskDelay(20/portTICK_PERIOD_MS);
-      //   delay(20);
       }
       
         vTaskDelay(1000/portTICK_PERIOD_MS);
-      // delay(1000);
       
       //Alignment: right
       //Zero Padding: Yes
       for (int i{950}; i < 1051; i++)
       {
         testResult = myLedDisp.print(i, true, true);
-      //   delay(20);
-         vTaskDelay(20/portTICK_PERIOD_MS);
+        vTaskDelay(20/portTICK_PERIOD_MS);
       }
       break;
     case 23:
@@ -270,8 +257,7 @@ void loop()
       for (int i{9900}; i < 10001; i++)
       {
         testResult = myLedDisp.print(i, true, true);
-      //   delay(20);
-         vTaskDelay(20/portTICK_PERIOD_MS);
+        vTaskDelay(20/portTICK_PERIOD_MS);
       }
       break;
     case 24:
@@ -280,8 +266,7 @@ void loop()
       for (int i{-900}; i > -1001; i--)
       {
         testResult = myLedDisp.print(i, true, true);
-         vTaskDelay(20/portTICK_PERIOD_MS);
-//   delay(20);
+        vTaskDelay(20/portTICK_PERIOD_MS);
       }
       break;
     case 25:
@@ -341,7 +326,6 @@ void loop()
     if ((lastTest > 0) && (testNum > lastTest))
       testNum = firstTest - 1;
     
-    //timer = millis();
     timer = xTaskGetTickCount() / portTICK_RATE_MS;
   }
 }
