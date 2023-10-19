@@ -1,5 +1,5 @@
 /*
-  fastRefreshUseExampleESP32.ino - Example file to demonstrate SevenSeg74HC595 class fastRefresh() related methods
+  refreshUseExampleESP32.ino - Example file to demonstrate SevenSeg74HC595 class refresh() related methods
   Created by Gabriel D. Goldman, May, 2023.
   Updated by Gabriel D. Goldman, October, 2023.
   Released into the public domain in accordance with "GPL-3.0-or-later" license terms.
@@ -33,7 +33,8 @@ void setup(){
 
 void loop()
 {
-  myLedDisp.fastRefresh();
-  // delay(6);   //This value is just to demonstrate the display tolerates keeping the data visible and have some time before starts to show a ghosting image
-  vTaskDelay(8 / portTICK_PERIOD_MS);   //This value is just to demonstrate the display tolerates keeping the data visible and have some time before starts to show a ghosting image
+  myLedDisp.refresh();
+  // delay(5);   //This value is just to demonstrate the display tolerates keeping the data visible and have some time before starts to show a ghosting image
+  vTaskDelay(6 / portTICK_PERIOD_MS);   //This value is just to demonstrate the display tolerates keeping the data visible and have some time before starts to show a ghosting image
+
 }
