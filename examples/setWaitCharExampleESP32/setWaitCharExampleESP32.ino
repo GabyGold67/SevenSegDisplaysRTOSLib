@@ -27,7 +27,6 @@ bool testResult{};
 SevenSeg74HC595 myLedDispOne(sclk, rclk, dio);
 
 void setup(){
-
 }
 
 void loop(){  

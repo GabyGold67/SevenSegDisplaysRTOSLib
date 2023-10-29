@@ -1,52 +1,54 @@
 #include <Arduino.h>
 #include "SevenSeg-74HC595.h"
 
-//Changes:
-//_ Make the instancesList a dynamic array in the heap, attribute of the class, with getter and setters
-
 uint8_t SevenSeg74HC595::displaysCount = 0;
-SevenSeg74HC595 *instancesList[MAX_PTR_ARRAY] {nullptr};
+SevenSeg74HC595* instancesList[DISP_PTR_ARRAY_LNGTH] {nullptr};  //---------------------------> Fixed array
+uint8_t SevenSeg74HC595::_dspPtrArrLngth = DISP_PTR_ARRAY_LNGTH;   //==========================>> Dynamically allocated array
+SevenSeg74HC595** SevenSeg74HC595::_instancesLstPtr = nullptr;   //==========================>> Dynamically allocated array
 
 void SevenSeg74HC595::tmrCbRefresh(TimerHandle_t dspTmrCbArg){
-   //SevenSeg74HC595 *argObj = (SevenSeg74HC595*)pvTimerGetTimerID(dspTmrCbArg);
+   SevenSeg74HC595 **argObj = (SevenSeg74HC595**)pvTimerGetTimerID(dspTmrCbArg);
    //Timer Callback to keep the display lit by calling each display's fastRefresh() method
-    for(uint8_t i {0}; i < MAX_PTR_ARRAY; i++)
-        if (instancesList[i] != nullptr){
-            instancesList[i]->fastRefresh();
+    
+    for(uint8_t i {0}; i < DISP_PTR_ARRAY_LNGTH; i++){        
+        if (instancesList[i] != nullptr){   //---------------------------> Fixed array
+            // instancesList[i]->fastRefresh();
         }
+    }    
+     
+    for(uint8_t i {0}; i < _dspPtrArrLngth; i++){
+        if (*(_instancesLstPtr + i) != nullptr)  //==========================>> Dynamically allocated array
+            (*(_instancesLstPtr + i)) -> fastRefresh();
+    }    
 
     return;
 }
 
 SevenSeg74HC595::SevenSeg74HC595(uint8_t sclk, uint8_t rclk, uint8_t dio, bool commAnode, const uint8_t dspDigits)
-:_sclk{sclk}, _rclk{rclk}, _dio{dio}, _commAnode{commAnode}, _dspDigits{dspDigits}
+:_sclk{sclk}, _rclk{rclk}, _dio{dio}, _commAnode{commAnode}, _dspDigits{dspDigits}, _digitPtr{new uint8_t (dspDigits)}, _blinkMaskPtr{new bool (dspDigits)}
 {
+    // Configure display communications pins
     pinMode(_sclk, OUTPUT);
     pinMode(_rclk, OUTPUT);
     pinMode(_dio, OUTPUT);
 
-    _digitPtr = new uint8_t(_dspDigits);    //Create a charcters array of the required size to hold the display content for each digit
-    _blinkMaskPtr = new bool(_dspDigits);   //Create a boolean array of the required size to hold the blink mask
-    if(_dspDigits > 1){
+    if(_dspDigits > 1){ //Calculate the minimum integer value dispayable with this display's available digits
         _dspValMin = 1;
-        for (uint8_t i{0}; i < (_dspDigits - 1); i++){
+        for (uint8_t i{0}; i < (_dspDigits - 1); i++)
             _dspValMin *= 10;
-        }
-        _dspValMin =(-1)*(_dspValMin - 1);
-
+        _dspValMin = -(--_dspValMin);   //_dspValMin =(-1)*(_dspValMin - 1);
     }
-    else{
+    else
         _dspValMin = 0;
-    }
-    _dspValMax = 1;
+    
+    _dspValMax = 1; //Calculate the maximum integer value dispayable with this display's available digits, create a Zero and a Space padding string for right alignement
     for (uint8_t i{0}; i < _dspDigits; i++){
         _dspValMax *= 10;
-        _zeroMask+="0";
-        _spaceMask+=" ";
+        _zeroPadding += "0";
+        _spacePadding += " ";
         *(_blinkMaskPtr + i) = true;
     }
-    _dspValMax -=1;
-
+    --_dspValMax;
 
     _dispInstNbr = displaysCount++;
     _dispInstance = this;
@@ -63,41 +65,76 @@ SevenSeg74HC595::SevenSeg74HC595(uint8_t sclk, uint8_t rclk, uint8_t dio, bool c
 }
 
 SevenSeg74HC595::~SevenSeg74HC595(){
-    delete _digitPtr;    
+    stop(); //Frees the slot in the pointers array for the refresh timer, and stops the timer if there are no valid pointers left
+    delete [] _digitPtr;        //Free the resources of the digits buffer
+    delete [] _blinkMaskPtr;    //Free the resources of the blink mask buffer
+
+    --displaysCount;
 }
 
 bool SevenSeg74HC595::begin(){
     bool result {false};
+    int frstFreeSlot{-1};
 
-    //Verify if the timer interrupt service was started by checking if there are displays added to the pointers vector
+    //Verify if the timer interrupt service was started by checking if the timer Handle is valid (and there are displays added to the pointers vector)
    if (!_dspRfrshTmrHndl){
       //Initialize the Display refresh timer. Considering each digit to be refreshed at 30 Hz in turn, the freq might be (_dspDigits * 30Hz)
       _dspRfrshTmrHndl = xTimerCreate(
-         "Display Refresh",
-         pdMS_TO_TICKS((int)(1000/(50*_dspDigits))),
-         pdTRUE,  //Autoreload
-         NULL, //TimerID, data to be passed to the callback function
-         tmrCbRefresh);  //Callback function
+            "Display Refresh",
+            pdMS_TO_TICKS((int)(1000/(50*_dspDigits))),
+            pdTRUE,  //Autoreload
+            NULL,   //TimerID, data to be passed to the callback function
+            SevenSeg74HC595::tmrCbRefresh);  //Callback function
 
       assert (_dspRfrshTmrHndl);      
    }
     
     // Include the object's pointer to the array of pointers to be serviced by the timer Callback, 
-    // if there's available space to hook the object will return true
-    for(uint8_t i {0}; i < MAX_PTR_ARRAY; i++)
+    // If this is the first instance created, create the array of instances in Heap    
+    if(_instancesLstPtr == nullptr){
+        _instancesLstPtr = new SevenSeg74HC595* [_dspPtrArrLngth];    //==========================>> Dynamically allocated array
+        for(int i{0}; i < _dspPtrArrLngth; i++)
+            *(_instancesLstPtr + i) = nullptr;
+    }
+
+    // Check if pointer to this object was already in the list of pointers, add otherwise
+    for(uint8_t i {0}; i < DISP_PTR_ARRAY_LNGTH; i++){  //---------------------------> Fixed array
         if (instancesList[i] == nullptr){
-            instancesList[i] = _dispInstance;
-            result = true;
-            break;
+            if(frstFreeSlot == -1)
+                frstFreeSlot = i;
         }
         else if (instancesList[i] == _dispInstance){
-            // The object pointer was already in the vector, the method will return true because the purpose of including it in te array 
-            // was achieved, although some mistake must have been done in the logic to try to include twice the same display
             result = true;
             break;
+        }        
+    }
+    if(!result)
+        if(frstFreeSlot > -1){
+            instancesList[frstFreeSlot] = _dispInstance;
+            result = true;
         }
-      if(result && (!xTimerIsTimerActive(_dspRfrshTmrHndl)))
-         xTimerStart(_dspRfrshTmrHndl, portMAX_DELAY);
+
+    frstFreeSlot = -1;  //=====================Temp solution, remove after deciding over the Dynamically allocated array
+    result = false;
+    for(uint8_t i {0}; i < _dspPtrArrLngth; i++){     //==========================>> Dynamically allocated array
+        if (*(_instancesLstPtr + i) == nullptr){
+            if(frstFreeSlot == -1)
+                frstFreeSlot = i;
+        }
+        else if (*(_instancesLstPtr + i) == _dispInstance){
+            result = true;
+            break;
+        }        
+    }
+    if(!result)
+        if(frstFreeSlot > -1){
+            *(_instancesLstPtr + frstFreeSlot) = _dispInstance;
+            result = true;
+        }
+
+    if(result && (!xTimerIsTimerActive(_dspRfrshTmrHndl)))
+    // The instance was added to the array, but the timer wasn't started, start the timer
+        xTimerStart(_dspRfrshTmrHndl, portMAX_DELAY);
 
     return result;
 }
@@ -199,20 +236,19 @@ void SevenSeg74HC595::fastRefresh(){
    updBlinkState();
    updWaitState();
    if ((_blinking == false) || (_blinkShowOn == true)) {
-      fastSend(*(_digitPtr+firstRefreshed), 1 << firstRefreshed);
+      fastSend(*(_digitPtr + _firstRefreshed), 1 << _firstRefreshed);
    }
-
-   if(_blinking && !_blinkShowOn){
-      for(int i{0}; i<_dspDigits; i++)
+   else if(_blinking && !_blinkShowOn){
+      for(uint8_t i{0}; i<_dspDigits; i++)
          tmpLogic = tmpLogic && *(_blinkMaskPtr + i);
       if (!tmpLogic){   //At least one digit is set NOT TO BLINK
-         if(!*(_blinkMaskPtr+firstRefreshed))
-            fastSend(*(_digitPtr+firstRefreshed), 1 << firstRefreshed);
+         if(!*(_blinkMaskPtr + _firstRefreshed))
+            fastSend(*(_digitPtr + _firstRefreshed), 1 << _firstRefreshed);
       }
    }
-   firstRefreshed++;
-   if (firstRefreshed == _dspDigits)
-      firstRefreshed = 0;
+   ++_firstRefreshed;
+   if (_firstRefreshed == _dspDigits)
+      _firstRefreshed = 0;
 
    return;
 }
@@ -381,7 +417,6 @@ bool SevenSeg74HC595::print(String text){
         }
     }
     text = tempText;
-
     if (text.length() <= _dspDigits){
         for (unsigned int i {0}; i < text.length(); ++i){
             position = _charSet.indexOf(text.charAt(i));
@@ -398,7 +433,6 @@ bool SevenSeg74HC595::print(String text){
     else {
         displayable = false;
     }
-
     if (displayable) {
         for (int i{0}; i < _dspDigits; ++i)
             *(_digitPtr + i) = temp7SegData[i] & tempDpData[i];
@@ -410,8 +444,6 @@ bool SevenSeg74HC595::print(String text){
 bool SevenSeg74HC595::print(const int &value, bool rgtAlgn, bool zeroPad){
     bool displayable{true};
     String readOut{""};
-    // if ((value < MIN_DISP_VALUE) || (value > MAX_DISP_VALUE)) {
-    // if ((value < _dspValMin) || (value > MAX_DISP_VALUE)) {
     if ((value < _dspValMin) || (value > _dspValMax)) {
         clear();
         displayable = false;
@@ -420,10 +452,9 @@ bool SevenSeg74HC595::print(const int &value, bool rgtAlgn, bool zeroPad){
         readOut = String(abs(value));
         if (rgtAlgn) {
             if (zeroPad)
-                readOut = _zeroMask + readOut;
+                readOut = _zeroPadding + readOut;
             else
-                readOut = _spaceMask + readOut;
-
+                readOut = _spacePadding + readOut;
 
             if (value >= 0)
                 readOut = readOut.substring(readOut.length() - _dspDigits);
@@ -459,16 +490,15 @@ bool SevenSeg74HC595::print(const double &value, const unsigned int &decPlaces, 
             readOut = "-";
         readOut += String(int(value)) + ".";
         start = String(value).indexOf('.') + 1;
-        readOut += (String(value) + _zeroMask).substring(start, start + decPlaces);
-
+        readOut += (String(value) + _zeroPadding).substring(start, start + decPlaces);
         if (rgtAlgn) {
             if (readOut.length() < _dspDigits + 1) {
                 if (value < 0)
                     pad += "-";
                 if (zeroPad)
-                    pad += _zeroMask;
+                    pad += _zeroPadding;
                 else
-                    pad += _spaceMask;
+                    pad += _spacePadding;
                 if (value < 0)
                     readOut = pad.substring(0, (_dspDigits+1) - (readOut.length()-1)) + readOut.substring(1);
                 else
@@ -476,7 +506,6 @@ bool SevenSeg74HC595::print(const double &value, const unsigned int &decPlaces, 
                 readOut = readOut.substring(0, _dspDigits+1);
             }
         }
-
         displayable = print(readOut);
     }
 
@@ -484,7 +513,6 @@ bool SevenSeg74HC595::print(const double &value, const unsigned int &decPlaces, 
 }
 
 void SevenSeg74HC595::refresh(){
-   static int firstRefreshed {0};
    bool tmpLogic {true};
    uint8_t tmpDigToSend{0};
 
@@ -493,25 +521,25 @@ void SevenSeg74HC595::refresh(){
 
     if((_blinking == false)||(_blinkShowOn == true)){
         for (int i {0}; i < _dspDigits; i++){
-            tmpDigToSend = *(_digitPtr+((i + firstRefreshed) % _dspDigits));
-            send(tmpDigToSend, 1<<(i + firstRefreshed) % _dspDigits);
+            tmpDigToSend = *(_digitPtr+((i + _firstRefreshed) % _dspDigits));
+            send(tmpDigToSend, 1<<((i + _firstRefreshed) % _dspDigits));
         }
     }
-    if(_blinking && !_blinkShowOn){
+    else if(_blinking && !_blinkShowOn){
       for(int i{0}; i < _dspDigits; i++)
-         tmpLogic = tmpLogic && *(_blinkMaskPtr + i);
+         tmpLogic = tmpLogic && *(_blinkMaskPtr + ((i + _firstRefreshed) % _dspDigits));
         if (!tmpLogic){   //At least one digit is set NOT TO BLINK
             for (int i {0}; i < _dspDigits; i++){
-                if(!*(_blinkMaskPtr+((i + firstRefreshed) % _dspDigits))){
-                    tmpDigToSend = *(_digitPtr+((i + firstRefreshed) % _dspDigits));
-                    send(tmpDigToSend, 1<<(i + firstRefreshed) % _dspDigits);
+                if(!*(_blinkMaskPtr + ((i + _firstRefreshed) % _dspDigits))){
+                    tmpDigToSend = *(_digitPtr + ((i + _firstRefreshed) % _dspDigits));
+                    send(tmpDigToSend, 1<<((i + _firstRefreshed) % _dspDigits));
                 }
             }
         }
     }
-    firstRefreshed++;
-    if (firstRefreshed == _dspDigits)
-        firstRefreshed = 0;
+    ++_firstRefreshed;
+    if (_firstRefreshed == _dspDigits)
+        _firstRefreshed = 0;
 
     return;
 }
@@ -607,7 +635,7 @@ bool SevenSeg74HC595::stop() {
     bool pointersFound(false);
     bool result {false};
 
-    for(uint8_t i {0}; i < MAX_PTR_ARRAY; i++)
+    for(uint8_t i {0}; i < DISP_PTR_ARRAY_LNGTH; i++){  //---------------------------> Fixed array
         if (instancesList[i] == _dispInstance){
             instancesList[i] = nullptr;
             result = true;
@@ -615,20 +643,42 @@ bool SevenSeg74HC595::stop() {
         else if (instancesList[i] != nullptr){
             // There are still objects pointers in the vector, so the refresh display services must continue active
             pointersFound = true;
+            if(result)
+                break;
         }
+    }
+
+    result = false;
+    for(uint8_t i {0}; i < _dspPtrArrLngth; i++){  //==========================>> Dynamically allocated array
+        if (*(_instancesLstPtr + i) == _dispInstance){
+            *(_instancesLstPtr + i) = nullptr;
+            result = true;
+        }
+        else if (*(_instancesLstPtr + i) != nullptr){
+            // There are still objects pointers in the vector, so the refresh display services must continue active
+            pointersFound = true;
+            if(result)
+                break;
+        }
+    }
 
     if (!pointersFound){
         //There are no more display instances active, there's no point in keeping the ISR active, the timer is stopped and the interrupt service detached
-      xTimerStop(_dspRfrshTmrHndl, portMAX_DELAY);
-      xTimerDelete(_dspRfrshTmrHndl, portMAX_DELAY);
-      _dspRfrshTmrHndl = nullptr;
+        delete [] _instancesLstPtr;
+        _instancesLstPtr = nullptr;
+        
+        if(_dspRfrshTmrHndl){   //if the timer still exists and is running, stop and delete
+            xTimerStop(_dspRfrshTmrHndl, portMAX_DELAY);
+            xTimerDelete(_dspRfrshTmrHndl, portMAX_DELAY);
+            _dspRfrshTmrHndl = nullptr;
+        }
     }   
 
     return result;
 }
 
 void SevenSeg74HC595::updBlinkState(){
-   //Must be replaced with a xTimer that keeps flip-floping the _blinkShowOn value
+   //=====================================>>Might be replaced with a xTimer that keeps flip-floping the _blinkShowOn value
    if (_blinking == true){
       if (_blinkShowOn == false) {
          if (_blinkTimer == 0){
@@ -661,7 +711,7 @@ void SevenSeg74HC595::updWaitState(){
    if (_waiting == true){
       if (_waitTimer == 0){
          for (int i{0}; i < _dspDigits; i++)
-            *(_digitPtr+i) = _space;
+            *(_digitPtr + i) = _space;
          _waitTimer = xTaskGetTickCount()/portTICK_RATE_MS;
       }
       else if((xTaskGetTickCount()/portTICK_RATE_MS - _waitTimer) > _waitRate){
@@ -727,7 +777,7 @@ bool SevenSeg74HC595::write(const String &character, const uint8_t &port){
             position = _charSet.indexOf(character);
             if (position > -1) {
                 // Character found for translation
-                *(_digitPtr+port) = _charLeds[position];
+                *(_digitPtr + port) = _charLeds[position];
                 result = true;
             }
     }

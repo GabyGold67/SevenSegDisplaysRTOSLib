@@ -2,10 +2,12 @@
 #define SEVENSEG_74HC595_H
 #include <Arduino.h>
 
-#define MAX_PTR_ARRAY 10
+#define DISP_PTR_ARRAY_LNGTH 10
 
 class SevenSeg74HC595 {
     static uint8_t displaysCount;
+    static uint8_t _dspPtrArrLngth;
+    static SevenSeg74HC595** _instancesLstPtr;
     static void tmrCbRefresh(TimerHandle_t dspTmrCbArg);
 
 private:
@@ -31,7 +33,7 @@ protected:
     SevenSeg74HC595* _dispInstance;
     uint8_t _dispInstNbr{0};
     volatile uint8_t* _digitPtr{nullptr};
-    uint8_t firstRefreshed{0};
+    uint8_t _firstRefreshed{0};
     bool _blinking{false};
     bool* _blinkMaskPtr{nullptr};
     bool _blinkShowOn{false};
@@ -86,12 +88,11 @@ protected:
         0x9C, // °
         0xFF, // Space
         0x7F  //.
-    };
-    
+    };    
     uint8_t _space {0xFF};
     uint8_t _dot {0x7F};
-    String _zeroMask{};
-    String _spaceMask{};
+    String _zeroPadding{};
+    String _spacePadding{};
 
     void fastSend(uint8_t content);
     void send(const uint8_t &content);
