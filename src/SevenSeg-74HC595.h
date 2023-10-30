@@ -2,13 +2,12 @@
 #define SEVENSEG_74HC595_H
 #include <Arduino.h>
 
-#define DISP_PTR_ARRAY_LNGTH 10
-
 class SevenSeg74HC595 {
-    static uint8_t displaysCount;
+    static uint8_t _displaysCount;
     static uint8_t _dspPtrArrLngth;
     static SevenSeg74HC595** _instancesLstPtr;
     static void tmrCbRefresh(TimerHandle_t dspTmrCbArg);
+    static TimerHandle_t _dspRfrshTmrHndl;
 
 private:
     uint8_t _waitChar  {0xBF};
@@ -22,7 +21,7 @@ protected:
     uint8_t _rclk;
     uint8_t _sclk;
     bool _commAnode {true};
-    TimerHandle_t _dspRfrshTmrHndl {nullptr};
+    // TimerHandle_t _dspRfrshTmrHndl {nullptr};
 
     const uint8_t _dspDigits{};
     int _dspValMin{};
@@ -32,7 +31,7 @@ protected:
     const unsigned long _maxBlinkRate{2000};
     SevenSeg74HC595* _dispInstance;
     uint8_t _dispInstNbr{0};
-    volatile uint8_t* _digitPtr{nullptr};
+    uint8_t* _digitPtr{nullptr};
     uint8_t _firstRefreshed{0};
     bool _blinking{false};
     bool* _blinkMaskPtr{nullptr};
@@ -108,7 +107,7 @@ public:
     void clear();
     bool doubleGauge(const int &levelLeft, const int &levelRight, char labelLeft = ' ', char labelRight = ' ');
     void fastRefresh();
-    void fastSend(volatile const uint8_t &segments, const uint8_t &port);
+    void fastSend(const uint8_t &segments, const uint8_t &port);
     bool gauge(const int &level, char label = ' ');
     bool gauge(const double &level, char label = ' ');
     uint8_t getInstanceNbr();

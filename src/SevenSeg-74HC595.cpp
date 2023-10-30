@@ -1,23 +1,18 @@
 #include <Arduino.h>
 #include "SevenSeg-74HC595.h"
 
-uint8_t SevenSeg74HC595::displaysCount = 0;
-SevenSeg74HC595* instancesList[DISP_PTR_ARRAY_LNGTH] {nullptr};  //---------------------------> Fixed array
-uint8_t SevenSeg74HC595::_dspPtrArrLngth = DISP_PTR_ARRAY_LNGTH;   //==========================>> Dynamically allocated array
-SevenSeg74HC595** SevenSeg74HC595::_instancesLstPtr = nullptr;   //==========================>> Dynamically allocated array
+uint8_t SevenSeg74HC595::_displaysCount = 0;
+uint8_t SevenSeg74HC595::_dspPtrArrLngth = 10;
+SevenSeg74HC595** SevenSeg74HC595::_instancesLstPtr = nullptr;
+    TimerHandle_t SevenSeg74HC595::_dspRfrshTmrHndl = nullptr;
+
 
 void SevenSeg74HC595::tmrCbRefresh(TimerHandle_t dspTmrCbArg){
    SevenSeg74HC595 **argObj = (SevenSeg74HC595**)pvTimerGetTimerID(dspTmrCbArg);
    //Timer Callback to keep the display lit by calling each display's fastRefresh() method
     
-    for(uint8_t i {0}; i < DISP_PTR_ARRAY_LNGTH; i++){        
-        if (instancesList[i] != nullptr){   //---------------------------> Fixed array
-            // instancesList[i]->fastRefresh();
-        }
-    }    
-     
     for(uint8_t i {0}; i < _dspPtrArrLngth; i++){
-        if (*(_instancesLstPtr + i) != nullptr)  //==========================>> Dynamically allocated array
+        if (*(_instancesLstPtr + i) != nullptr)
             (*(_instancesLstPtr + i)) -> fastRefresh();
     }    
 
@@ -50,7 +45,7 @@ SevenSeg74HC595::SevenSeg74HC595(uint8_t sclk, uint8_t rclk, uint8_t dio, bool c
     }
     --_dspValMax;
 
-    _dispInstNbr = displaysCount++;
+    _dispInstNbr = _displaysCount++;
     _dispInstance = this;
 
     if(!_commAnode){
@@ -69,7 +64,7 @@ SevenSeg74HC595::~SevenSeg74HC595(){
     delete [] _digitPtr;        //Free the resources of the digits buffer
     delete [] _blinkMaskPtr;    //Free the resources of the blink mask buffer
 
-    --displaysCount;
+    --_displaysCount;
 }
 
 bool SevenSeg74HC595::begin(){
@@ -92,31 +87,13 @@ bool SevenSeg74HC595::begin(){
     // Include the object's pointer to the array of pointers to be serviced by the timer Callback, 
     // If this is the first instance created, create the array of instances in Heap    
     if(_instancesLstPtr == nullptr){
-        _instancesLstPtr = new SevenSeg74HC595* [_dspPtrArrLngth];    //==========================>> Dynamically allocated array
+        _instancesLstPtr = new SevenSeg74HC595* [_dspPtrArrLngth];
         for(int i{0}; i < _dspPtrArrLngth; i++)
             *(_instancesLstPtr + i) = nullptr;
     }
 
     // Check if pointer to this object was already in the list of pointers, add otherwise
-    for(uint8_t i {0}; i < DISP_PTR_ARRAY_LNGTH; i++){  //---------------------------> Fixed array
-        if (instancesList[i] == nullptr){
-            if(frstFreeSlot == -1)
-                frstFreeSlot = i;
-        }
-        else if (instancesList[i] == _dispInstance){
-            result = true;
-            break;
-        }        
-    }
-    if(!result)
-        if(frstFreeSlot > -1){
-            instancesList[frstFreeSlot] = _dispInstance;
-            result = true;
-        }
-
-    frstFreeSlot = -1;  //=====================Temp solution, remove after deciding over the Dynamically allocated array
-    result = false;
-    for(uint8_t i {0}; i < _dspPtrArrLngth; i++){     //==========================>> Dynamically allocated array
+    for(uint8_t i {0}; i < _dspPtrArrLngth; i++){
         if (*(_instancesLstPtr + i) == nullptr){
             if(frstFreeSlot == -1)
                 frstFreeSlot = i;
@@ -272,7 +249,7 @@ void SevenSeg74HC595::fastSend(uint8_t content){
     return;
 }
 
-void SevenSeg74HC595::fastSend(volatile const uint8_t &segments, const uint8_t &port){
+void SevenSeg74HC595::fastSend(const uint8_t &segments, const uint8_t &port){
     // Sends the character 'segments' to the digit 'port' of the display
     // Content and Port must be sent in two sequencial parts, character first, port second
     // so this overloaded two char fastSend() method uses the one char fastSend() method twice and then moves
@@ -635,20 +612,6 @@ bool SevenSeg74HC595::stop() {
     bool pointersFound(false);
     bool result {false};
 
-    for(uint8_t i {0}; i < DISP_PTR_ARRAY_LNGTH; i++){  //---------------------------> Fixed array
-        if (instancesList[i] == _dispInstance){
-            instancesList[i] = nullptr;
-            result = true;
-        }
-        else if (instancesList[i] != nullptr){
-            // There are still objects pointers in the vector, so the refresh display services must continue active
-            pointersFound = true;
-            if(result)
-                break;
-        }
-    }
-
-    result = false;
     for(uint8_t i {0}; i < _dspPtrArrLngth; i++){  //==========================>> Dynamically allocated array
         if (*(_instancesLstPtr + i) == _dispInstance){
             *(_instancesLstPtr + i) = nullptr;

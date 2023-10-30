@@ -7,7 +7,7 @@
 #include <Arduino.h>
 #include <SevenSeg-74HC595.h>
 
-//Pin connection for Display
+//Pin connection for Display #1
 // Pin connected to DS of 74HC595 AKA DIO
 const uint8_t dsp1Dio {4};  // Board pin # of ESP32 WROOM-32 uPesy dev Board
 // Pin connected to ST_CP of 74HC595 AKA RCLK
@@ -93,7 +93,6 @@ void loop()
       //print() with a string argument, four characters long AND usable dots, all characters included in the representable characters list
       //Each valid character might be followed by a "." if needed, without being counted as a character, even spaces and special chars
       testResultOne = myLedDispOne.print("I.F.Y.I.");
-
       testResultTwo = myLedDispTwo.print("the");
       break;
     case 1:
@@ -266,7 +265,9 @@ void loop()
       }
       break;
     case 22:
-      testResultTwo = myLedDispTwo.print(".");
+      // testResultTwo = myLedDispTwo.print(".");
+      testResultTwo = myLedDispTwo.setWaitChar('.');
+      testResultTwo = myLedDispTwo.wait();
       //This counts show: positive integers 3 digits to positive integers 4 digits
       //Alignment: left
       //Zero Padding: No
@@ -277,10 +278,8 @@ void loop()
       vTaskDelay(20/portTICK_PERIOD_MS);
       }
       
-      testResultTwo = myLedDispTwo.print("..");
       // delay(1000);
       vTaskDelay(1000/portTICK_PERIOD_MS);
-      testResultTwo = myLedDispTwo.print("...");
       
       //Alignment: right
       //Zero Padding: No
@@ -291,10 +290,9 @@ void loop()
       vTaskDelay(20/portTICK_PERIOD_MS);
       }
 
-      testResultTwo = myLedDispTwo.print("....");
       // delay(1000);
       vTaskDelay(1000/portTICK_PERIOD_MS);
-      testResultTwo = myLedDispTwo.print("o");
+      testResultTwo = myLedDispTwo.setWaitChar('o');
       
       //Alignment: left
       //Zero Padding: Yes (useless as the left alignment doesn't leave space for the extra 0's)
@@ -305,10 +303,8 @@ void loop()
       vTaskDelay(20/portTICK_PERIOD_MS);
       }
 
-      testResultTwo = myLedDispTwo.print("oo");
       // delay(1000);
       vTaskDelay(1000/portTICK_PERIOD_MS);
-      testResultTwo = myLedDispTwo.print("ooo");
       
       //Alignment: right
       //Zero Padding: Yes
@@ -318,10 +314,9 @@ void loop()
       // delay(20);
       vTaskDelay(20/portTICK_PERIOD_MS);
       }
-      testResultTwo = myLedDispTwo.print("oooo");
       break;
     case 23:
-      testResultTwo = myLedDispTwo.print("0");
+      testResultTwo = myLedDispTwo.setWaitChar('0');
 
       //This counts show: positive integers 4 digits to positive integers 5 digits. When the count reaches 10,000 the print() returns false,
       //and an Error message stating the Error and number of test is displayed
@@ -331,11 +326,8 @@ void loop()
       // delay(20);
       vTaskDelay(20/portTICK_PERIOD_MS);
       }
-      testResultTwo = myLedDispTwo.print("00");
       break;
     case 24:
-      testResultTwo = myLedDispTwo.print("000");
-
       //This counts show: negative integers 3 digits to negative integers 4 digits. When the count reaches -1,000 the print() returns false,
       //and an Error message stating the Error and number of test is displayed
       for (int i{-900}; i > -1001; i--)
@@ -344,11 +336,11 @@ void loop()
       // delay(20);
       vTaskDelay(20/portTICK_PERIOD_MS);
       }
-      testResultTwo = myLedDispTwo.print("0000");
       break;
     case 25:
       //Use of the degrees symbol (°) by using the * ASCII character
       testResultOne = myLedDispOne.print("36.7*");
+      testResultTwo = myLedDispTwo.noWait();
       testResultTwo = myLedDispTwo.print("98.6*");
       break;
     case 26:
@@ -363,20 +355,18 @@ void loop()
       break;
     case 28:
       //An easy way to use the display to show that a process is ongoing or a "Waiting State"
-      testResultOne = myLedDispOne.print("-");
+      testResultOne = myLedDispOne.wait();
       break;
     case 29:
-      testResultOne = myLedDispOne.print("--");
       break;
     case 30:
-      testResultOne = myLedDispOne.print("---");
       break;
     case 31:
       testResultTwo = myLedDispTwo.print("I");
-      testResultOne = myLedDispOne.print("----");
       break;
     case 32:
       //Also possible using the dots, here showing the 4 dots lit with independence of other characters
+      testResultOne = myLedDispOne.noWait();
       testResultOne = myLedDispOne.print("Feel");
       testResultTwo = myLedDispTwo.print("bord");
       break;
