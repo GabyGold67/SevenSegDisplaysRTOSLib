@@ -142,10 +142,10 @@ private:
     int _beginStartVal{0};
     bool _countRgthAlgn{true};
     bool _countZeroPad{false};
-    bool _rollOver{false};
 
 public:
-    ClickCounter(uint8_t ccSclk, uint8_t ccRclk, uint8_t ccDio, bool rgthAlgn = true, bool zeroPad = false, bool rollOver = false, bool commAnode = true);
+    ClickCounter(uint8_t ccSclk, uint8_t ccRclk, uint8_t ccDio, bool rgthAlgn = true, bool zeroPad = false, bool commAnode = true, const uint8_t dspDigits = 4);
+    ~ClickCounter();
     bool blink();
     bool blink(const unsigned long &onRate, const unsigned long &offRate = 0);
     bool countBegin(int startVal = 0);

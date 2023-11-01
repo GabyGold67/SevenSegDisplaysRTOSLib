@@ -750,10 +750,14 @@ bool SevenSeg74HC595::write(const String &character, const uint8_t &port){
 
 //============================================================> Class methods separator
 
-ClickCounter::ClickCounter(uint8_t ccSclk, uint8_t ccRclk, uint8_t ccDio, bool rgthAlgn, bool zeroPad,  bool rollOver, bool commAnode)
-:SevenSeg74HC595(ccSclk, ccRclk, ccDio, commAnode), _countRgthAlgn {rgthAlgn}, _countZeroPad {zeroPad}, _rollOver{rollOver}
+ClickCounter::ClickCounter(uint8_t ccSclk, uint8_t ccRclk, uint8_t ccDio, bool rgthAlgn, bool zeroPad, bool commAnode, const uint8_t dspDigits)
+:SevenSeg74HC595(ccSclk, ccRclk, ccDio, commAnode, dspDigits), _countRgthAlgn {rgthAlgn}, _countZeroPad {zeroPad}
 {
     //Class constructor
+}
+
+ClickCounter::~ClickCounter(){
+
 }
 
 bool ClickCounter::blink(){
