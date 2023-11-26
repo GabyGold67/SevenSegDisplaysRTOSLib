@@ -7,6 +7,7 @@ class SevenSeg74HC595 {
     static uint8_t _dspPtrArrLngth;
     static SevenSeg74HC595** _instancesLstPtr;
     static void tmrCbRefresh(TimerHandle_t dspTmrCbArg);
+    static void tmrCbBlnkSwp(TimerHandle_t dspTmrCbArg);
     static TimerHandle_t _dspRfrshTmrHndl;
 
 private:
@@ -21,8 +22,7 @@ protected:
     uint8_t _rclk;
     uint8_t _sclk;
     bool _commAnode {true};
-    // TimerHandle_t _dspRfrshTmrHndl {nullptr};
-
+    
     const uint8_t _dspDigits{};
     int _dspValMin{};
     int _dspValMax{};
@@ -88,6 +88,7 @@ protected:
         0xFF, // Space
         0x7F  //.
     };    
+    
     uint8_t _space {0xFF};
     uint8_t _dot {0x7F};
     String _zeroPadding{};
@@ -110,6 +111,7 @@ public:
     void fastSend(const uint8_t &segments, const uint8_t &port);
     bool gauge(const int &level, char label = ' ');
     bool gauge(const double &level, char label = ' ');
+    uint8_t getDigitsQty();
     uint8_t getInstanceNbr();
     unsigned long getMaxBlinkRate();
     unsigned long getMinBlinkRate();
@@ -134,7 +136,7 @@ public:
 
 };
 
-//============================================================> Class methods separator
+//============================================================> Class declarations separator
 
 class ClickCounter: protected SevenSeg74HC595{
 private:

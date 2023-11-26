@@ -4,7 +4,7 @@
 uint8_t SevenSeg74HC595::_displaysCount = 0;
 uint8_t SevenSeg74HC595::_dspPtrArrLngth = 10;
 SevenSeg74HC595** SevenSeg74HC595::_instancesLstPtr = nullptr;
-    TimerHandle_t SevenSeg74HC595::_dspRfrshTmrHndl = nullptr;
+TimerHandle_t SevenSeg74HC595::_dspRfrshTmrHndl = nullptr;
 
 
 void SevenSeg74HC595::tmrCbRefresh(TimerHandle_t dspTmrCbArg){
@@ -268,8 +268,8 @@ bool SevenSeg74HC595::gauge(const int &level, char label){
     bool displayable{true};
     String readOut{""};
 
-    if ((level < 0) || (level > 3)) {
-        clear();
+    clear();
+    if (((level < 0) || (level > 3)) || (_dspDigits < 4)) {
         displayable = false;
     }
     else {
@@ -300,7 +300,7 @@ bool SevenSeg74HC595::gauge(const double &level, char label) {
     bool displayable{true};
     int intLevel{0};
 
-    if ((level < 0.0) || (level > 1.0)) {
+    if (((level < 0.0) || (level > 1.0)) || (_dspDigits < 4)) {
         clear();
         displayable = false;
     }
@@ -317,6 +317,11 @@ bool SevenSeg74HC595::gauge(const double &level, char label) {
     }
 
     return displayable;
+}
+
+uint8_t SevenSeg74HC595::getDigitsQty(){
+
+    return _dspDigits;
 }
 
 uint8_t SevenSeg74HC595::getInstanceNbr(){
@@ -421,6 +426,7 @@ bool SevenSeg74HC595::print(String text){
 bool SevenSeg74HC595::print(const int &value, bool rgtAlgn, bool zeroPad){
     bool displayable{true};
     String readOut{""};
+
     if ((value < _dspValMin) || (value > _dspValMax)) {
         clear();
         displayable = false;
@@ -612,7 +618,7 @@ bool SevenSeg74HC595::stop() {
     bool pointersFound(false);
     bool result {false};
 
-    for(uint8_t i {0}; i < _dspPtrArrLngth; i++){  //==========================>> Dynamically allocated array
+    for(uint8_t i {0}; i < _dspPtrArrLngth; i++){
         if (*(_instancesLstPtr + i) == _dispInstance){
             *(_instancesLstPtr + i) = nullptr;
             result = true;
@@ -641,15 +647,14 @@ bool SevenSeg74HC595::stop() {
 }
 
 void SevenSeg74HC595::updBlinkState(){
-   //=====================================>>Might be replaced with a xTimer that keeps flip-floping the _blinkShowOn value
+   //The use of a xTimer that keeps flip-floping the _blinkShowOn value is better suited for symmetrical blinking, but not for assymetrical cases.
    if (_blinking == true){
       if (_blinkShowOn == false) {
          if (_blinkTimer == 0){
             //turn off the digits by sending directly a blank to each port, without affecting the _digit[] buffer
             for (int i{0}; i < _dspDigits; i++)
                send(_space, 0b01 << i);
-            _blinkTimer = xTaskGetTickCount() / portTICK_RATE_MS; //Starts the count for the blinkRate control
-            
+            _blinkTimer = xTaskGetTickCount() / portTICK_RATE_MS; //Starts the count for the blinkRate control            
          }
          else if((xTaskGetTickCount() / portTICK_RATE_MS - _blinkTimer)> _blinkOffRate){
             _blinkTimer = 0;
@@ -681,9 +686,9 @@ void SevenSeg74HC595::updWaitState(){
          for (int i{_dspDigits - 1}; i >= 0; i--){
 
             if(( _dspDigits - i) <= _waitCount)
-               *(_digitPtr+i) = _waitChar;
+               *(_digitPtr + i) = _waitChar;
             else
-               *(_digitPtr+i) = _space;
+               *(_digitPtr + i) = _space;
          }
          _waitCount++;
          if (_waitCount == (_dspDigits + 1))
@@ -830,7 +835,6 @@ bool ClickCounter::countUp(int qty){
     bool result {false};
     qty = abs(qty);
 
-    // if((_count + qty) <= MAX_DISP_VALUE){
     if((_count + qty) <= _dspValMax){
         _count += qty;
         result = updDisplay();
