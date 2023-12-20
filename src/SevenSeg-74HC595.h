@@ -7,7 +7,7 @@ class SevenSeg74HC595 {
     static uint8_t _dspPtrArrLngth;
     static SevenSeg74HC595** _instancesLstPtr;
     static void tmrCbRefresh(TimerHandle_t dspTmrCbArg);
-    static void tmrCbBlnkSwp(TimerHandle_t dspTmrCbArg);
+    // static void tmrCbBlnkSwp(TimerHandle_t dspTmrCbArg);
     static TimerHandle_t _dspRfrshTmrHndl;
 
 private:
