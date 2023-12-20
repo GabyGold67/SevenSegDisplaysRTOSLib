@@ -16,14 +16,14 @@ Integers, floating point or strings they'll show as long as the display is capab
 ## Trustworthy representation basic checking:
 The representation of different types of data in this kind of displays is limited, and many implementations of the libraries to drive them take arbitrary or personally biased decisions on how to handle the problem.
 The danger of misrepresenting values in the display are usually ignored so when a value can't be faithfully represented by the display, the data is rounded, floored, ceiled, sliced, characters are replaced by others or whatever criteria the developer defined. When trying to display the value __"90153"__ through a 4 digits  module, displaying __"9015"__ is no better, nor worse, than displaying __"0153"__, those are __misrepresentations__. This library returns a boolean value indicating if it was able to display a trustworthy representation of the value, as long as it is able to. If a trustworthy representation was not possible it will return a **false** value and blank the display.  
-## Crossplatform:
+## Unattended refreshing:
 This kind of displays need to be periodically refreshed, as it can actively turn on only one digit at a time, so to keep all de digits visible the user must activate periodically each digit one by one independently to generate a "cinematic effect". The library takes care of this, and offers two solutions to do so.  
-* The first is to attach the refreshing methods to a timer interrupt service (ISR) of the microcontroller, or to a software timer provided by the O.S., in this case the FreeRTOS timer daemon.  
+* The first is to attach the refreshing methods to a timer interrupt service (ISR) of the microcontroller, or to a Software Timer Service provided by the O.S., in this case the FreeRTOS timer daemon.  
 * The second is through methods that the user can call periodically from the main code.  
 
 The first mechanism frees the user from the load of calling the refreshing methods periodically, specially considering that long looping times (when executing **`for`**, **`while`** and **`do`** loops included), or the use of **`delay()`** type of commands could make the display flicker or simply stop until next refresh. The second option is given for the develpment of special display schemes. In any case the library is capable of working in any platform, using one way when possible, or the other always.  
 
-# **Included Methods for TM74HC595LedTube class**
+# **Included Methods for SevenSeg74HC595 class**
 
 |Method | Parameters|
 |---|---|
