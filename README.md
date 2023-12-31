@@ -3,7 +3,7 @@
 [![PlatformIO Registry](https://badges.registry.platformio.org/packages/gabygold/library/SevenSegDisplays.svg)](https://registry.platformio.org/libraries/gabygold/SevenSegDisplays) 
 ![Build with PlatformIO](https://img.shields.io/badge/build%20with-PlatformIO-orange?logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMjUwMCIgaGVpZ2h0PSIyNTAwIiB2aWV3Qm94PSIwIDAgMjU2IDI1NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCI+PHBhdGggZD0iTTEyOCAwQzkzLjgxIDAgNjEuNjY2IDEzLjMxNCAzNy40OSAzNy40OSAxMy4zMTQgNjEuNjY2IDAgOTMuODEgMCAxMjhjMCAzNC4xOSAxMy4zMTQgNjYuMzM0IDM3LjQ5IDkwLjUxQzYxLjY2NiAyNDIuNjg2IDkzLjgxIDI1NiAxMjggMjU2YzM0LjE5IDAgNjYuMzM0LTEzLjMxNCA5MC41MS0zNy40OUMyNDIuNjg2IDE5NC4zMzQgMjU2IDE2Mi4xOSAyNTYgMTI4YzAtMzQuMTktMTMuMzE0LTY2LjMzNC0zNy40OS05MC41MUMxOTQuMzM0IDEzLjMxNCAxNjIuMTkgMCAxMjggMCIgZmlsbD0iI0ZGN0YwMCIvPjxwYXRoIGQ9Ik0yNDkuMzg2IDEyOGMwIDY3LjA0LTU0LjM0NyAxMjEuMzg2LTEyMS4zODYgMTIxLjM4NkM2MC45NiAyNDkuMzg2IDYuNjEzIDE5NS4wNCA2LjYxMyAxMjggNi42MTMgNjAuOTYgNjAuOTYgNi42MTQgMTI4IDYuNjE0YzY3LjA0IDAgMTIxLjM4NiA1NC4zNDYgMTIxLjM4NiAxMjEuMzg2IiBmaWxsPSIjRkZGIi8+PHBhdGggZD0iTTE2MC44NjkgNzQuMDYybDUuMTQ1LTE4LjUzN2M1LjI2NC0uNDcgOS4zOTItNC44ODYgOS4zOTItMTAuMjczIDAtNS43LTQuNjItMTAuMzItMTAuMzItMTAuMzJzLTEwLjMyIDQuNjItMTAuMzIgMTAuMzJjMCAzLjc1NSAyLjAxMyA3LjAzIDUuMDEgOC44MzdsLTUuMDUgMTguMTk1Yy0xNC40MzctMy42Ny0yNi42MjUtMy4zOS0yNi42MjUtMy4zOWwtMi4yNTggMS4wMXYxNDAuODcybDIuMjU4Ljc1M2MxMy42MTQgMCA3My4xNzctNDEuMTMzIDczLjMyMy04NS4yNyAwLTMxLjYyNC0yMS4wMjMtNDUuODI1LTQwLjU1NS01Mi4xOTd6TTE0Ni41MyAxNjQuOGMtMTEuNjE3LTE4LjU1Ny02LjcwNi02MS43NTEgMjMuNjQzLTY3LjkyNSA4LjMyLTEuMzMzIDE4LjUwOSA0LjEzNCAyMS41MSAxNi4yNzkgNy41ODIgMjUuNzY2LTM3LjAxNSA2MS44NDUtNDUuMTUzIDUxLjY0NnptMTguMjE2LTM5Ljc1MmE5LjM5OSA5LjM5OSAwIDAgMC05LjM5OSA5LjM5OSA5LjM5OSA5LjM5OSAwIDAgMCA5LjQgOS4zOTkgOS4zOTkgOS4zOTkgMCAwIDAgOS4zOTgtOS40IDkuMzk5IDkuMzk5IDAgMCAwLTkuMzk5LTkuMzk4em0yLjgxIDguNjcyYTIuMzc0IDIuMzc0IDAgMSAxIDAtNC43NDkgMi4zNzQgMi4zNzQgMCAwIDEgMCA0Ljc0OXoiIGZpbGw9IiNFNTcyMDAiLz48cGF0aCBkPSJNMTAxLjM3MSA3Mi43MDlsLTUuMDIzLTE4LjkwMWMyLjg3NC0xLjgzMiA0Ljc4Ni01LjA0IDQuNzg2LTguNzAxIDAtNS43LTQuNjItMTAuMzItMTAuMzItMTAuMzItNS42OTkgMC0xMC4zMTkgNC42Mi0xMC4zMTkgMTAuMzIgMCA1LjY4MiA0LjU5MiAxMC4yODkgMTAuMjY3IDEwLjMxN0w5NS44IDc0LjM3OGMtMTkuNjA5IDYuNTEtNDAuODg1IDIwLjc0Mi00MC44ODUgNTEuODguNDM2IDQ1LjAxIDU5LjU3MiA4NS4yNjcgNzMuMTg2IDg1LjI2N1Y2OC44OTJzLTEyLjI1Mi0uMDYyLTI2LjcyOSAzLjgxN3ptMTAuMzk1IDkyLjA5Yy04LjEzOCAxMC4yLTUyLjczNS0yNS44OC00NS4xNTQtNTEuNjQ1IDMuMDAyLTEyLjE0NSAxMy4xOS0xNy42MTIgMjEuNTExLTE2LjI4IDMwLjM1IDYuMTc1IDM1LjI2IDQ5LjM2OSAyMy42NDMgNjcuOTI2em0tMTguODItMzkuNDZhOS4zOTkgOS4zOTkgMCAwIDAtOS4zOTkgOS4zOTggOS4zOTkgOS4zOTkgMCAwIDAgOS40IDkuNCA5LjM5OSA5LjM5OSAwIDAgMCA5LjM5OC05LjQgOS4zOTkgOS4zOTkgMCAwIDAtOS4zOTktOS4zOTl6bS0yLjgxIDguNjcxYTIuMzc0IDIuMzc0IDAgMSAxIDAtNC43NDggMi4zNzQgMi4zNzQgMCAwIDEgMCA0Ljc0OHoiIGZpbGw9IiNGRjdGMDAiLz48L3N2Zz4=)
 
-Originally developed to easily display numeric and text data on the cheap and popular "4-Bits LED Digital Tube Module", **a 7-segment 4 digits led display**, and afterwards enhaced to work with any 1 to 8 digits 7-segments displays (**_and for all the custom made displays as: GIANTS COUNTERS, TIMERS, PRICING DISPLAYS, etc._**) based on two 74HC595 and similar shift registers, the main focus was set on: ease of use, flexibility and basic prevention of 'misrepresentation' errors.
+Originally developed to easily display numeric and text data on the cheap and popular "4-Bits LED Digital Tube Module", **a 7-segment 4 digits led display**, and afterwards enhaced to work with any 1 to 8 digits 7-segments **dynamic** displays (**_and for all the custom made displays as: GIANTS COUNTERS, TIMERS, PRICING DISPLAYS, etc._**) based on two 74HC595 and/or similar shift registers, the main focus was set on: ease of use, flexibility and basic prevention of 'misrepresentation' errors.
 
 ![4-Bits LED Digital Tube Module](https://github.com/GabyGold67/FourBitLedDigitalTube/blob/master/extras/4-BitsLedDigitalTubeModule01.jpg "4-Bits LED Digital Tube Module")
 
@@ -11,7 +11,7 @@ Originally developed to easily display numeric and text data on the cheap and po
 Instance the class passing just 3 parameters (the 3 pins connected to the display module), notify the object and it's ready to go: start ``.print()``ing the data to the display. There's no need of even setting those pin modes.  
 
 ## Flexibility:
-Integers, floating point or strings they'll show as long as the display is capable of doing so in a trustworthy way. If you need to represent a percentage or level of completeness a ``.gauge()`` and a ``.doubleGauge()`` methods are included to represent them in a "Old Motorola brick cell phones' style".
+Integers, floating point or strings they'll show as long as the display is capable of doing so in a trustworthy way. If you need to represent a percentage or level of completeness a ``.gauge()`` and a ``.doubleGauge()`` methods are included to represent them in a "Old Motorola brick cell phones' style". The library is capable of managing a correct representation even in differently wired displays by letting configure the order in wich the digits are connected to the registers.  
 
 ## Trustworthy representation basic checking:
 The representation of different types of data in this kind of displays is limited, and many implementations of the libraries to drive them take arbitrary or personally biased decisions on how to handle the problem.
@@ -53,6 +53,7 @@ The first mechanism frees the user from the load of calling the refreshing metho
 |**send()**|uint8_t **segments**, uint8_t **port**|
 |**setBlinkMask()**|bool **blnkPort[]**|
 |**setBlinkRate()**|unsigned long **newOnRate**, (unsigned long **newOffRate**)|
+|**setDigitsOrder()**|uint8_t* **newOrder**, uint8_t **newOrderSize**|
 |**setWaitChar()**|char **newWaitChar**|
 |**setWaitRate()**|unsigned long **newWaitRate**|
 |**stop()**|None|
@@ -449,6 +450,21 @@ false: One or more of the parameters passed were out of range. The rate change w
 **`myLedDisp.setBlinkRate(800, 200);`** //Returns true and sets the blinking rate to 800 millisecs on, 200 millisecs off (asymmetrical blink)  
 **`myLedDisp.setBlinkRate(3000);`** //Returns false and the display blinking rate stays without change.  
 **`myLedDisp.setBlinkRate(600, 3500);`** //Returns false and the display blinking rate stays without change.  
+
+---
+
+### **setDigitsOrder**(uint8_t* **newOrderPtr**, uint8_t **newOrderSize**);
+### Description:
+As different 7 segments dynamic displays based on two 74HC595 are differently wired, some implement the leftmost display port as the LSb of the shift register driving the port selection, some implement it as the MSb. When more than one display modules are used it adds a new level of hardware implementation that differs from one supplier to the other. The library implements a mechanism to provide the instantiated object to relate the positions of the display ports to the bits of the selection byte through an array. The array has the size of the display instantiated, and each array elment is meant to hold the number of the bit that selects the corresponding port, being the first element of the array (array[0]) the corresponding to the leftmost display digit, array[1], the next to it's right and so on. The array is default defined in the constructor as (0, 1, 2,...) that is the most usual implementation found. If the order needs to be changed the `.setDigitsOrder()` method is the way to set a new mapping.
+### Parameters:  
+**newOrderPtr**: pointer to an uint8_t array of **_dspDigits** lenght containing the position of the bit corresponding to each display port. Each value will be checked against the _dspDigits value to ensure that they are all in the range acceptable, 0 <= value <= _dspDigits - 1. If one of the values is out of the valid range no change will be done. Please note that no checking will be done to ensure all of the array values are different. A repeated value will be accepted.  
+**newOrderSize**: uint8_t value giving the total lenght of the array containing the information. The newOrderSize will be checked against the _dspDigits value to ensure both match. If the value don't match no change will be done  
+### Return value:  
+true: The array length was right and all of the elements of the array were in the accepted range. The change was performed  
+false: One or more of the parameters passed were out of range. The change wasn't performed.  
+### Use example:
+**`uint8_t diyMore8Bits[8] {3, 2, 1, 0, 7, 6, 5, 4};`** //Builds an array with the port order of the "DIY MORE 8-bit LED Display".  
+**`myLedDisp.setDigitsOrder(diyMore8Bits, 8);`** //Changes the display bit to port mapping according to the display characteristics.  
 
 ---
 ### **setWaitChar**(char **newWaitChar**);

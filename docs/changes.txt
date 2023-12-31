@@ -1,0 +1,5 @@
+v1.1.0 Added support for alternative wired modules, that use not direct correspondence between the bit position and the display port position
+_ Added a mechanism to map de display port positions to bits position of the shift register, to seamlessly work with different wiring implementations made by different display providers.
+_ Added the .setDigitsOrder() method to change that mapping as needed.
+_ Added constants providing known mappings for some displays.
+_ Added examples for 8-bits displays.

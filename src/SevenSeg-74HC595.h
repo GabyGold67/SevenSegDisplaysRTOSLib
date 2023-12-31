@@ -31,6 +31,7 @@ protected:
     const unsigned long _maxBlinkRate{2000};
     SevenSeg74HC595* _dispInstance;
     uint8_t _dispInstNbr{0};
+    uint8_t* _digitPosPtr{nullptr};
     uint8_t* _digitPtr{nullptr};
     uint8_t _firstRefreshed{0};
     bool _blinking{false};
@@ -127,6 +128,7 @@ public:
     void send(const uint8_t &segments, const uint8_t &port);
     void setBlinkMask(const bool blnkPort[]);
     bool setBlinkRate(const unsigned long &newOnRate, const unsigned long &newOffRate = 0);
+    bool setDigitsOrder(uint8_t* newOrderPtr, const uint8_t &newOrderSize);
     bool setWaitChar (const char &newChar);
     bool setWaitRate(const unsigned long &newWaitRate);
     bool stop();

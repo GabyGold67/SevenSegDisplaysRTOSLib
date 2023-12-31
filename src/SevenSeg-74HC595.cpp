@@ -1,6 +1,9 @@
 #include <Arduino.h>
 #include "SevenSeg-74HC595.h"
 
+const uint8_t diyMore8Bits[8] {3, 2, 1, 0, 7, 6, 5, 4};
+const uint8_t noName4Bits[4] {0, 1, 2, 3};
+
 uint8_t SevenSeg74HC595::_displaysCount = 0;
 uint8_t SevenSeg74HC595::_dspPtrArrLngth = 10;
 SevenSeg74HC595** SevenSeg74HC595::_instancesLstPtr = nullptr;
@@ -20,7 +23,7 @@ void SevenSeg74HC595::tmrCbRefresh(TimerHandle_t dspTmrCbArg){
 }
 
 SevenSeg74HC595::SevenSeg74HC595(uint8_t sclk, uint8_t rclk, uint8_t dio, bool commAnode, const uint8_t dspDigits)
-:_sclk{sclk}, _rclk{rclk}, _dio{dio}, _commAnode{commAnode}, _dspDigits{dspDigits}, _digitPtr{new uint8_t (dspDigits)}, _blinkMaskPtr{new bool (dspDigits)}
+:_sclk{sclk}, _rclk{rclk}, _dio{dio}, _commAnode{commAnode}, _dspDigits{dspDigits}, _digitPosPtr{new uint8_t(dspDigits)}, _digitPtr{new uint8_t (dspDigits)}, _blinkMaskPtr{new bool (dspDigits)}
 {
     // Configure display communications pins
     pinMode(_sclk, OUTPUT);
@@ -42,6 +45,7 @@ SevenSeg74HC595::SevenSeg74HC595(uint8_t sclk, uint8_t rclk, uint8_t dio, bool c
         _zeroPadding += "0";
         _spacePadding += " ";
         *(_blinkMaskPtr + i) = true;
+        *(_digitPosPtr + i) = i;
     }
     --_dspValMax;
 
@@ -213,14 +217,14 @@ void SevenSeg74HC595::fastRefresh(){
    updBlinkState();
    updWaitState();
    if ((_blinking == false) || (_blinkShowOn == true)) {
-      fastSend(*(_digitPtr + _firstRefreshed), 1 << _firstRefreshed);
+      fastSend(*(_digitPtr + _firstRefreshed), 1 << *(_digitPosPtr + _firstRefreshed));
    }
    else if(_blinking && !_blinkShowOn){
       for(uint8_t i{0}; i<_dspDigits; i++)
          tmpLogic = tmpLogic && *(_blinkMaskPtr + i);
       if (!tmpLogic){   //At least one digit is set NOT TO BLINK
          if(!*(_blinkMaskPtr + _firstRefreshed))
-            fastSend(*(_digitPtr + _firstRefreshed), 1 << _firstRefreshed);
+            fastSend(*(_digitPtr + _firstRefreshed), 1 << *(_digitPosPtr + _firstRefreshed));
       }
    }
    ++_firstRefreshed;
@@ -236,7 +240,7 @@ void SevenSeg74HC595::fastSend(uint8_t content){
     //consumed to shift an entire byte is supposed to be the lowest achievable in this level of abstraction.
     //So this is the method suggested to be called from an ISR to keep the ISR time consumed to the lowest
 
-    for (int i {7}; i >= 0; i--){
+    for (int i {7}; i >= 0; i--){   //Send each of the 8 bits representing the character
         if (content & 0x80)
             digitalWrite(_dio, HIGH);
         else
@@ -515,7 +519,7 @@ void SevenSeg74HC595::refresh(){
             for (int i {0}; i < _dspDigits; i++){
                 if(!*(_blinkMaskPtr + ((i + _firstRefreshed) % _dspDigits))){
                     tmpDigToSend = *(_digitPtr + ((i + _firstRefreshed) % _dspDigits));
-                    send(tmpDigToSend, 1<<((i + _firstRefreshed) % _dspDigits));
+                    send(tmpDigToSend, 1<<((i + *(_digitPosPtr + _firstRefreshed)) % _dspDigits));
                 }
             }
         }
@@ -579,6 +583,29 @@ bool SevenSeg74HC595::setBlinkRate(const unsigned long &newOnRate, const unsigne
     //The value was outside valid range, keep the existing rate and report the error by returning false
     
     return result;  
+}
+
+bool SevenSeg74HC595::setDigitsOrder(uint8_t* newOrderPtr, const uint8_t &newOrderSize){
+    bool result{true};
+
+    if (newOrderSize == _dspDigits){
+        for(int i {0}; i < newOrderSize; i++){
+            if (*(newOrderPtr + i) >= _dspDigits){
+                result = false;
+                break;
+            }   
+        }
+        if (result){
+            for(int i {0}; i < newOrderSize; i++){
+                *(_digitPosPtr + i) = *(newOrderPtr + i);
+            }
+        }
+    }
+    else{
+        result = false;
+    }
+
+    return result;
 }
 
 bool SevenSeg74HC595::setWaitChar (const char &newChar){
@@ -730,7 +757,7 @@ bool SevenSeg74HC595::write(const uint8_t &segments, const uint8_t &port){
     bool result {false};
     
     if (port < _dspDigits){
-        *(_digitPtr+port) = segments;
+        *(_digitPtr + port) = segments;
         result = true;
     }
     
