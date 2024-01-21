@@ -7,7 +7,6 @@ class SevenSeg74HC595 {
     static uint8_t _dspPtrArrLngth;
     static SevenSeg74HC595** _instancesLstPtr;
     static void tmrCbRefresh(TimerHandle_t dspTmrCbArg);
-    // static void tmrCbBlnkSwp(TimerHandle_t dspTmrCbArg);
     static TimerHandle_t _dspRfrshTmrHndl;
 
 private:
@@ -18,24 +17,24 @@ private:
     unsigned long _waitTimer {0};
 
 protected:
-    uint8_t _dio;
-    uint8_t _rclk;
     uint8_t _sclk;
+    uint8_t _rclk;
+    uint8_t _dio;
     bool _commAnode {true};
-    
     const uint8_t _dspDigits{};
-    int _dspValMin{};
-    int _dspValMax{};
+    uint8_t* _digitPosPtr{nullptr};
+    uint8_t* _digitPtr{nullptr};
+    bool* _blinkMaskPtr{nullptr};
+
+    int32_t _dspValMax{};
+    int32_t _dspValMin{};
 
     const unsigned long _minBlinkRate{100};
     const unsigned long _maxBlinkRate{2000};
     SevenSeg74HC595* _dispInstance;
     uint8_t _dispInstNbr{0};
-    uint8_t* _digitPosPtr{nullptr};
-    uint8_t* _digitPtr{nullptr};
     uint8_t _firstRefreshed{0};
     bool _blinking{false};
-    bool* _blinkMaskPtr{nullptr};
     bool _blinkShowOn{false};
     unsigned long _blinkOffRate{500};
     unsigned long _blinkOnRate{500};
@@ -92,8 +91,8 @@ protected:
     
     uint8_t _space {0xFF};
     uint8_t _dot {0x7F};
-    String _zeroPadding{};
-    String _spacePadding{};
+    String _zeroPadding{""};
+    String _spacePadding{""};
 
     void fastSend(uint8_t content);
     void send(const uint8_t &content);
@@ -121,14 +120,14 @@ public:
     bool noBlink();
     bool noWait();
     bool print(String text);
-    bool print(const int &value, bool rgtAlgn = false, bool zeroPad = false);
+    bool print(const int32_t &value, bool rgtAlgn = false, bool zeroPad = false);
     bool print(const double &value, const unsigned int &decPlaces, bool rgtAlgn = false, bool zeroPad = false);
     void refresh();
     void resetBlinkMask();
     void send(const uint8_t &segments, const uint8_t &port);
     void setBlinkMask(const bool blnkPort[]);
     bool setBlinkRate(const unsigned long &newOnRate, const unsigned long &newOffRate = 0);
-    bool setDigitsOrder(uint8_t* newOrderPtr, const uint8_t &newOrderSize);
+    bool setDigitsOrder(uint8_t* newOrderPtr);
     bool setWaitChar (const char &newChar);
     bool setWaitRate(const unsigned long &newWaitRate);
     bool stop();
@@ -152,15 +151,15 @@ public:
     ~ClickCounter();
     bool blink();
     bool blink(const unsigned long &onRate, const unsigned long &offRate = 0);
-    bool countBegin(int startVal = 0);
-    bool countDown(int qty = 1);
+    bool countBegin(int32_t startVal = 0);
+    bool countDown(int32_t qty = 1);
     bool countReset();
-    bool countRestart(int restartValue = 0);
+    bool countRestart(int32_t restartValue = 0);
     bool countStop();
-    bool countToZero(int qty = 1);
-    bool countUp(int qty = 1);
-    int getCount();
-    int getStartVal();
+    bool countToZero(int32_t qty = 1);
+    bool countUp(int32_t qty = 1);
+    int32_t getCount();
+    int32_t getStartVal();
     bool noBlink();
     bool setBlinkRate(const unsigned long &newOnRate, const unsigned long &newOffRate = 0);
     bool updDisplay();

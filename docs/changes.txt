@@ -1,3 +1,14 @@
+v1.2.0 Methods simplification and debugging
+Changes:
+_ .setDigitsOrder() method newOrderSize parameter is removed as it didn't provided any needed information, minor incompatibility issues resulting in this change is preferred over keeping a backwards compatibility mechanism
+_ _dspValMin and _dspValMax type changed from int to int32_t to ensure compatibility across different mcus and compilation settings.
+_ All methods returning or using int values were changed to uint32_t where needed to ensure failsafe representation
+Debugging:
+_ Constructor dynamic memory asignation () misused, corrected.
+
+
+v1.1.1 Avoided memory leaking by ensuring _digitPosPtr[] delete in the object destructor
+
 v1.1.0 Added support for alternative wired modules, that use not direct correspondence between the bit position and the display port position
 _ Added a mechanism to map de display port positions to bits position of the shift register, to seamlessly work with different wiring implementations made by different display providers.
 _ Added the .setDigitsOrder() method to change that mapping as needed.

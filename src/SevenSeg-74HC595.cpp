@@ -3,27 +3,15 @@
 
 const uint8_t diyMore8Bits[8] {3, 2, 1, 0, 7, 6, 5, 4};
 const uint8_t noName4Bits[4] {0, 1, 2, 3};
+const int MAX_DIGITS_DISPLAYS{8};
 
 uint8_t SevenSeg74HC595::_displaysCount = 0;
 uint8_t SevenSeg74HC595::_dspPtrArrLngth = 10;
 SevenSeg74HC595** SevenSeg74HC595::_instancesLstPtr = nullptr;
 TimerHandle_t SevenSeg74HC595::_dspRfrshTmrHndl = nullptr;
 
-
-void SevenSeg74HC595::tmrCbRefresh(TimerHandle_t dspTmrCbArg){
-   SevenSeg74HC595 **argObj = (SevenSeg74HC595**)pvTimerGetTimerID(dspTmrCbArg);
-   //Timer Callback to keep the display lit by calling each display's fastRefresh() method
-    
-    for(uint8_t i {0}; i < _dspPtrArrLngth; i++){
-        if (*(_instancesLstPtr + i) != nullptr)
-            (*(_instancesLstPtr + i)) -> fastRefresh();
-    }    
-
-    return;
-}
-
 SevenSeg74HC595::SevenSeg74HC595(uint8_t sclk, uint8_t rclk, uint8_t dio, bool commAnode, const uint8_t dspDigits)
-:_sclk{sclk}, _rclk{rclk}, _dio{dio}, _commAnode{commAnode}, _dspDigits{dspDigits}, _digitPosPtr{new uint8_t(dspDigits)}, _digitPtr{new uint8_t (dspDigits)}, _blinkMaskPtr{new bool (dspDigits)}
+:_sclk{sclk}, _rclk{rclk}, _dio{dio}, _commAnode{commAnode}, _dspDigits{dspDigits}, _digitPosPtr{new uint8_t[dspDigits]}, _digitPtr{new uint8_t [dspDigits]}, _blinkMaskPtr{new bool [dspDigits]}
 {
     // Configure display communications pins
     pinMode(_sclk, OUTPUT);
@@ -44,8 +32,8 @@ SevenSeg74HC595::SevenSeg74HC595(uint8_t sclk, uint8_t rclk, uint8_t dio, bool c
         _dspValMax *= 10;
         _zeroPadding += "0";
         _spacePadding += " ";
-        *(_blinkMaskPtr + i) = true;
         *(_digitPosPtr + i) = i;
+        *(_blinkMaskPtr + i) = true;
     }
     --_dspValMax;
 
@@ -66,6 +54,7 @@ SevenSeg74HC595::SevenSeg74HC595(uint8_t sclk, uint8_t rclk, uint8_t dio, bool c
 SevenSeg74HC595::~SevenSeg74HC595(){
     stop(); //Frees the slot in the pointers array for the refresh timer, and stops the timer if there are no valid pointers left
     delete [] _digitPtr;        //Free the resources of the digits buffer
+    delete [] _digitPosPtr;
     delete [] _blinkMaskPtr;    //Free the resources of the blink mask buffer
 
     --_displaysCount;
@@ -74,48 +63,52 @@ SevenSeg74HC595::~SevenSeg74HC595(){
 bool SevenSeg74HC595::begin(){
     bool result {false};
     int frstFreeSlot{-1};
+    BaseType_t tmrModResult {pdFAIL};
 
     //Verify if the timer interrupt service was started by checking if the timer Handle is valid (and there are displays added to the pointers vector)
-   if (!_dspRfrshTmrHndl){
-      //Initialize the Display refresh timer. Considering each digit to be refreshed at 30 Hz in turn, the freq might be (_dspDigits * 30Hz)
-      _dspRfrshTmrHndl = xTimerCreate(
+    if (!_dspRfrshTmrHndl){
+      //Initialize the Display refresh timer. Considering each digit to be refreshed at 30 Hz in turn, the freq might be (Max qty of digits * 30Hz)
+        _dspRfrshTmrHndl = xTimerCreate(
             "Display Refresh",
-            pdMS_TO_TICKS((int)(1000/(50*_dspDigits))),
+            pdMS_TO_TICKS((int)(1000/(30 * MAX_DIGITS_DISPLAYS))),
             pdTRUE,  //Autoreload
             NULL,   //TimerID, data to be passed to the callback function
-            SevenSeg74HC595::tmrCbRefresh);  //Callback function
-
-      assert (_dspRfrshTmrHndl);      
-   }
-    
-    // Include the object's pointer to the array of pointers to be serviced by the timer Callback, 
-    // If this is the first instance created, create the array of instances in Heap    
-    if(_instancesLstPtr == nullptr){
-        _instancesLstPtr = new SevenSeg74HC595* [_dspPtrArrLngth];
-        for(int i{0}; i < _dspPtrArrLngth; i++)
-            *(_instancesLstPtr + i) = nullptr;
+            SevenSeg74HC595::tmrCbRefresh  //Callback function
+        );
     }
 
-    // Check if pointer to this object was already in the list of pointers, add otherwise
-    for(uint8_t i {0}; i < _dspPtrArrLngth; i++){
-        if (*(_instancesLstPtr + i) == nullptr){
-            if(frstFreeSlot == -1)
-                frstFreeSlot = i;
+    if (_dspRfrshTmrHndl != NULL){
+        // Include the object's pointer to the array of pointers to be serviced by the timer Callback, 
+        // If this is the first instance created, create the array of instances in Heap    
+        if(_instancesLstPtr == nullptr){
+            _instancesLstPtr = new SevenSeg74HC595* [_dspPtrArrLngth];
+            for(int i{0}; i < _dspPtrArrLngth; i++)
+                *(_instancesLstPtr + i) = nullptr;
+        }            
+        //Look for a free slot in the array of pointers to displays to be refreshed or find if the display is already in the array
+        for(uint8_t i {0}; i < _dspPtrArrLngth; i++){
+            if (*(_instancesLstPtr + i) == nullptr){    //Save the first free slot of the list in case it's needed later
+                if(frstFreeSlot == -1)
+                    frstFreeSlot = i;
+            }
+            else if (*(_instancesLstPtr + i) == _dispInstance){
+                result = true;  //The display was included in the list of instances to keep refreshed
+                break;
+            }        
         }
-        else if (*(_instancesLstPtr + i) == _dispInstance){
+        if(!result){    // The pointer to this object wasn't in the list, so it must be added
+            if(frstFreeSlot > -1){
+                *(_instancesLstPtr + frstFreeSlot) = _dispInstance;
+                result = true;
+            }
+        }
+    }  
+    if(result && (!xTimerIsTimerActive(_dspRfrshTmrHndl))){
+        // The instance was added to the array, but the timer wasn't started, start the timer
+        tmrModResult = xTimerStart(_dspRfrshTmrHndl, portMAX_DELAY);
+        if (tmrModResult == pdPASS)
             result = true;
-            break;
-        }        
     }
-    if(!result)
-        if(frstFreeSlot > -1){
-            *(_instancesLstPtr + frstFreeSlot) = _dispInstance;
-            result = true;
-        }
-
-    if(result && (!xTimerIsTimerActive(_dspRfrshTmrHndl)))
-    // The instance was added to the array, but the timer wasn't started, start the timer
-        xTimerStart(_dspRfrshTmrHndl, portMAX_DELAY);
 
     return result;
 }
@@ -217,14 +210,14 @@ void SevenSeg74HC595::fastRefresh(){
    updBlinkState();
    updWaitState();
    if ((_blinking == false) || (_blinkShowOn == true)) {
-      fastSend(*(_digitPtr + _firstRefreshed), 1 << *(_digitPosPtr + _firstRefreshed));
+      fastSend(*(_digitPtr + _firstRefreshed), uint8_t(1) << *(_digitPosPtr + _firstRefreshed));
    }
    else if(_blinking && !_blinkShowOn){
       for(uint8_t i{0}; i<_dspDigits; i++)
          tmpLogic = tmpLogic && *(_blinkMaskPtr + i);
       if (!tmpLogic){   //At least one digit is set NOT TO BLINK
          if(!*(_blinkMaskPtr + _firstRefreshed))
-            fastSend(*(_digitPtr + _firstRefreshed), 1 << *(_digitPosPtr + _firstRefreshed));
+            fastSend(*(_digitPtr + _firstRefreshed), uint8_t(1) << *(_digitPosPtr + _firstRefreshed));
       }
    }
    ++_firstRefreshed;
@@ -420,14 +413,14 @@ bool SevenSeg74HC595::print(String text){
         displayable = false;
     }
     if (displayable) {
-        for (int i{0}; i < _dspDigits; ++i)
+        for (uint8_t i{0}; i < _dspDigits; ++i)
             *(_digitPtr + i) = temp7SegData[i] & tempDpData[i];
     }
 
     return displayable;
 }
 
-bool SevenSeg74HC595::print(const int &value, bool rgtAlgn, bool zeroPad){
+bool SevenSeg74HC595::print(const int32_t &value, bool rgtAlgn, bool zeroPad){
     bool displayable{true};
     String readOut{""};
 
@@ -506,10 +499,10 @@ void SevenSeg74HC595::refresh(){
     updBlinkState();
     updWaitState();
 
-    if((_blinking == false)||(_blinkShowOn == true)){
+    if((_blinking == false) || (_blinkShowOn == true)){
         for (int i {0}; i < _dspDigits; i++){
-            tmpDigToSend = *(_digitPtr+((i + _firstRefreshed) % _dspDigits));
-            send(tmpDigToSend, 1<<((i + _firstRefreshed) % _dspDigits));
+            tmpDigToSend = *(_digitPtr + ((i + _firstRefreshed) % _dspDigits));
+            send(tmpDigToSend, uint8_t(1) << *(_digitPosPtr + ((i + _firstRefreshed) % _dspDigits)));
         }
     }
     else if(_blinking && !_blinkShowOn){
@@ -519,7 +512,7 @@ void SevenSeg74HC595::refresh(){
             for (int i {0}; i < _dspDigits; i++){
                 if(!*(_blinkMaskPtr + ((i + _firstRefreshed) % _dspDigits))){
                     tmpDigToSend = *(_digitPtr + ((i + _firstRefreshed) % _dspDigits));
-                    send(tmpDigToSend, 1<<((i + *(_digitPosPtr + _firstRefreshed)) % _dspDigits));
+                    send(tmpDigToSend, 1 << *(_digitPosPtr + ((i + _firstRefreshed) % _dspDigits)));
                 }
             }
         }
@@ -532,7 +525,7 @@ void SevenSeg74HC595::refresh(){
 }
 
 void SevenSeg74HC595::resetBlinkMask(){
-   for (int i{0}; i < _dspDigits; i++)
+   for (uint8_t i{0}; i < _dspDigits; i++)
       *(_blinkMaskPtr + i) = true;
 
    return;
@@ -585,24 +578,19 @@ bool SevenSeg74HC595::setBlinkRate(const unsigned long &newOnRate, const unsigne
     return result;  
 }
 
-bool SevenSeg74HC595::setDigitsOrder(uint8_t* newOrderPtr, const uint8_t &newOrderSize){
+bool SevenSeg74HC595::setDigitsOrder(uint8_t* newOrderPtr){
     bool result{true};
 
-    if (newOrderSize == _dspDigits){
-        for(int i {0}; i < newOrderSize; i++){
-            if (*(newOrderPtr + i) >= _dspDigits){
-                result = false;
-                break;
-            }   
-        }
-        if (result){
-            for(int i {0}; i < newOrderSize; i++){
-                *(_digitPosPtr + i) = *(newOrderPtr + i);
-            }
-        }
+    for(int i {0}; i < _dspDigits; i++){
+        if (*(newOrderPtr + i) >= _dspDigits){
+            result = false;
+            break;
+        }   
     }
-    else{
-        result = false;
+    if (result){
+        for(int i {0}; i < _dspDigits; i++){
+            *(_digitPosPtr + i) = *(newOrderPtr + i);
+        }
     }
 
     return result;
@@ -671,6 +659,18 @@ bool SevenSeg74HC595::stop() {
     }   
 
     return result;
+}
+
+void SevenSeg74HC595::tmrCbRefresh(TimerHandle_t dspTmrCbArg){
+   SevenSeg74HC595 **argObj = (SevenSeg74HC595**)pvTimerGetTimerID(dspTmrCbArg);
+   //Timer Callback to keep the display lit by calling each display's fastRefresh() method
+    
+    for(uint8_t i {0}; i < _dspPtrArrLngth; i++){
+        if (*(_instancesLstPtr + i) != nullptr)
+            (*(_instancesLstPtr + i)) -> fastRefresh();
+    }    
+
+    return;
 }
 
 void SevenSeg74HC595::updBlinkState(){
@@ -802,7 +802,7 @@ bool ClickCounter::blink(const unsigned long &onRate, const unsigned long &offRa
     return SevenSeg74HC595::blink(onRate, offRate);
 }
 
-bool ClickCounter::countBegin(int startVal){
+bool ClickCounter::countBegin(int32_t startVal){
    bool result{false};
 
     if (SevenSeg74HC595::begin() == true){
@@ -814,7 +814,7 @@ bool ClickCounter::countBegin(int startVal){
    return result;
 }
 
-bool ClickCounter::countDown(int qty){
+bool ClickCounter::countDown(int32_t qty){
     bool result {false};
     qty = abs(qty);
 
@@ -831,7 +831,7 @@ bool ClickCounter::countReset(){
     return countRestart(_beginStartVal);
 }
     
-bool ClickCounter::countRestart(int restartValue){
+bool ClickCounter::countRestart(int32_t restartValue){
    bool result{false};
 
    if ((restartValue >= _dspValMin) && (restartValue <= _dspValMax)){
@@ -847,7 +847,7 @@ bool ClickCounter::countStop(){
     return SevenSeg74HC595::stop();
 }
 
-bool ClickCounter::countToZero(int qty){
+bool ClickCounter::countToZero(int32_t qty){
     bool result {false};
 
     if (_count > 0)
@@ -858,7 +858,7 @@ bool ClickCounter::countToZero(int qty){
     return result;
 }
 
-bool ClickCounter::countUp(int qty){
+bool ClickCounter::countUp(int32_t qty){
     bool result {false};
     qty = abs(qty);
 

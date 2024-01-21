@@ -36,8 +36,7 @@ uint8_t diyMore8Bits[8] {3, 2, 1, 0, 7, 6, 5, 4};
 void setup()
 {
   testNum = firstTest - 1;
-  myLedDisp.setDigitsOrder(diyMore8Bits, 8);
-
+  myLedDisp.setDigitsOrder(diyMore8Bits);
 }
 
 void loop()

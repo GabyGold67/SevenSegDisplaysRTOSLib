@@ -453,18 +453,17 @@ false: One or more of the parameters passed were out of range. The rate change w
 
 ---
 
-### **setDigitsOrder**(uint8_t* **newOrderPtr**, uint8_t **newOrderSize**);
+### **setDigitsOrder**(uint8_t* **newOrderPtr**);
 ### Description:
 As different 7 segments dynamic displays based on two 74HC595 are differently wired, some implement the leftmost display port as the LSb of the shift register driving the port selection, some implement it as the MSb. When more than one display modules are used it adds a new level of hardware implementation that differs from one supplier to the other. The library implements a mechanism to provide the instantiated object to relate the positions of the display ports to the bits of the selection byte through an array. The array has the size of the display instantiated, and each array elment is meant to hold the number of the bit that selects the corresponding port, being the first element of the array (array[0]) the corresponding to the leftmost display digit, array[1], the next to it's right and so on. The array is default defined in the constructor as (0, 1, 2,...) that is the most usual implementation found. If the order needs to be changed the `.setDigitsOrder()` method is the way to set a new mapping.
 ### Parameters:  
 **newOrderPtr**: pointer to an uint8_t array of **_dspDigits** lenght containing the position of the bit corresponding to each display port. Each value will be checked against the _dspDigits value to ensure that they are all in the range acceptable, 0 <= value <= _dspDigits - 1. If one of the values is out of the valid range no change will be done. Please note that no checking will be done to ensure all of the array values are different. A repeated value will be accepted.  
-**newOrderSize**: uint8_t value giving the total lenght of the array containing the information. The newOrderSize will be checked against the _dspDigits value to ensure both match. If the value don't match no change will be done  
 ### Return value:  
-true: The array length was right and all of the elements of the array were in the accepted range. The change was performed  
-false: One or more of the parameters passed were out of range. The change wasn't performed.  
+true: All of the elements of the array were in the accepted range. The change was performed  
+false: At least one of the values of the array passed were out of range. The change wasn't performed.  
 ### Use example:
 **`uint8_t diyMore8Bits[8] {3, 2, 1, 0, 7, 6, 5, 4};`** //Builds an array with the port order of the "DIY MORE 8-bit LED Display".  
-**`myLedDisp.setDigitsOrder(diyMore8Bits, 8);`** //Changes the display bit to port mapping according to the display characteristics.  
+**`myLedDisp.setDigitsOrder(diyMore8Bits);`** //Changes the display bit to port mapping according to the display characteristics.  
 
 ---
 ### **setWaitChar**(char **newWaitChar**);
