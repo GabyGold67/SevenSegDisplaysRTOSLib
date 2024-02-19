@@ -1,3 +1,10 @@
+v1.3.0
+_ Changed the relation between ClickCounter and TM74HC595LedTube classes, from Inheritance to Dependency, as the needed methods to achieve the change were progresively added.
+_ getDspValMax() and getDspValMin() methods added, as the v2.0.0 update gave the possibility to instantiate different lenght displays, the minimum and maximum values representable by the display are now instantiation dependant. These methods give the resulting values for the integer range displayable.
+_ Minor debug in counter class limit checking corrected.
+_ Redundant code cleanup.
+_ Documentation corrections and additions
+
 v1.2.0 Methods simplification and debugging
 Changes:
 _ .setDigitsOrder() method newOrderSize parameter is removed as it didn't provided any needed information, minor incompatibility issues resulting in this change is preferred over keeping a backwards compatibility mechanism

@@ -2,10 +2,10 @@
 #define SEVENSEG_74HC595_H
 #include <Arduino.h>
 
-class SevenSeg74HC595 {
+class SevenSegDisplays {
     static uint8_t _displaysCount;
     static uint8_t _dspPtrArrLngth;
-    static SevenSeg74HC595** _instancesLstPtr;
+    static SevenSegDisplays** _instancesLstPtr;
     static void tmrCbRefresh(TimerHandle_t dspTmrCbArg);
     static TimerHandle_t _dspRfrshTmrHndl;
 
@@ -31,7 +31,7 @@ protected:
 
     const unsigned long _minBlinkRate{100};
     const unsigned long _maxBlinkRate{2000};
-    SevenSeg74HC595* _dispInstance;
+    SevenSegDisplays* _dispInstance;
     uint8_t _dispInstNbr{0};
     uint8_t _firstRefreshed{0};
     bool _blinking{false};
@@ -94,14 +94,16 @@ protected:
     String _zeroPadding{""};
     String _spacePadding{""};
 
+    void setAttrbts();
     void fastSend(uint8_t content);
     void send(const uint8_t &content);
     void updBlinkState();
     void updWaitState();
 
 public:
-    SevenSeg74HC595(uint8_t sclk, uint8_t rclk, uint8_t dio, bool commAnode = true, const uint8_t dspDigits = 4);
-    ~SevenSeg74HC595();
+    SevenSegDisplays();
+    SevenSegDisplays(uint8_t sclk, uint8_t rclk, uint8_t dio, bool commAnode = true, const uint8_t dspDigits = 4);
+    ~SevenSegDisplays();
     bool begin();
     bool blink();
     bool blink(const unsigned long &onRate, const unsigned long &offRate = 0);
@@ -112,6 +114,8 @@ public:
     bool gauge(const int &level, char label = ' ');
     bool gauge(const double &level, char label = ' ');
     uint8_t getDigitsQty();
+    uint32_t getDspValMax();
+    uint32_t getDspValMin();
     uint8_t getInstanceNbr();
     unsigned long getMaxBlinkRate();
     unsigned long getMinBlinkRate();
@@ -139,8 +143,30 @@ public:
 
 //============================================================> Class declarations separator
 
-class ClickCounter: protected SevenSeg74HC595{
+// class SevenSeg74HC595: public SevenSegDisplays{
+// protected:
+//     // void fastSend(uint8_t content);
+//     void send(const uint8_t &content);
+
+// public:
+//     SevenSeg74HC595(uint8_t sclk, uint8_t rclk, uint8_t dio, bool commAnode = true, const uint8_t dspDigits = 4);
+//     ~SevenSeg74HC595();
+
+// };
+
+//============================================================> Class declarations separator
+
+// class SevenSegTM1637: public SevenSegDisplays{
+// public:
+// SevenSegTM1637(uint8_t clk, uint8_t dio, bool commAnode = true, const uint8_t dspDigits = 4);
+// ~SevenSegTM1637();
+// };
+
+//============================================================> Class declarations separator
+
+class ClickCounter{
 private:
+    SevenSegDisplays _display;
     int _count{0};
     int _beginStartVal{0};
     bool _countRgthAlgn{true};
@@ -151,6 +177,7 @@ public:
     ~ClickCounter();
     bool blink();
     bool blink(const unsigned long &onRate, const unsigned long &offRate = 0);
+    void clear();
     bool countBegin(int32_t startVal = 0);
     bool countDown(int32_t qty = 1);
     bool countReset();
