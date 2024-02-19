@@ -5,16 +5,16 @@ const uint8_t diyMore8Bits[8] {3, 2, 1, 0, 7, 6, 5, 4};
 const uint8_t noName4Bits[4] {0, 1, 2, 3};
 const int MAX_DIGITS_DISPLAYS{8};
 
-uint8_t SevenSegDisplays::_displaysCount = 0;
-uint8_t SevenSegDisplays::_dspPtrArrLngth = 10;
-SevenSegDisplays** SevenSegDisplays::_instancesLstPtr = nullptr;
-TimerHandle_t SevenSegDisplays::_dspRfrshTmrHndl = nullptr;
+uint8_t SevenSeg74HC595::_displaysCount = 0;
+uint8_t SevenSeg74HC595::_dspPtrArrLngth = 10;
+SevenSeg74HC595** SevenSeg74HC595::_instancesLstPtr = nullptr;
+TimerHandle_t SevenSeg74HC595::_dspRfrshTmrHndl = nullptr;
 
-SevenSegDisplays::SevenSegDisplays()
+SevenSeg74HC595::SevenSeg74HC595()
 {
 }
 
-SevenSegDisplays::SevenSegDisplays(uint8_t sclk, uint8_t rclk, uint8_t dio, bool commAnode, const uint8_t dspDigits)
+SevenSeg74HC595::SevenSeg74HC595(uint8_t sclk, uint8_t rclk, uint8_t dio, bool commAnode, const uint8_t dspDigits)
 :_sclk{sclk}, _rclk{rclk}, _dio{dio}, _commAnode{commAnode}, _dspDigits{dspDigits}, _digitPosPtr{new uint8_t[dspDigits]}, _digitPtr{new uint8_t [dspDigits]}, _blinkMaskPtr{new bool [dspDigits]}
 {
     // Configure display communications pins
@@ -26,7 +26,7 @@ SevenSegDisplays::SevenSegDisplays(uint8_t sclk, uint8_t rclk, uint8_t dio, bool
     clear();
 }
 
-void SevenSegDisplays::setAttrbts(){
+void SevenSeg74HC595::setAttrbts(){
     if(_dspDigits > 1){ //Calculate the minimum integer value displayable with this display's available digits
         _dspValMin = 1;
         for (uint8_t i{0}; i < (_dspDigits - 1); i++)
@@ -60,7 +60,7 @@ void SevenSegDisplays::setAttrbts(){
     return;
 }
 
-SevenSegDisplays::~SevenSegDisplays(){
+SevenSeg74HC595::~SevenSeg74HC595(){
     stop(); //Frees the slot in the pointers array for the refresh timer, and stops the timer if there are no valid pointers left
     delete [] _digitPtr;        //Free the resources of the digits buffer
     delete [] _digitPosPtr;
@@ -69,7 +69,7 @@ SevenSegDisplays::~SevenSegDisplays(){
     --_displaysCount;
 }
 
-bool SevenSegDisplays::begin(){
+bool SevenSeg74HC595::begin(){
     bool result {false};
     int frstFreeSlot{-1};
     BaseType_t tmrModResult {pdFAIL};
@@ -82,7 +82,7 @@ bool SevenSegDisplays::begin(){
             pdMS_TO_TICKS((int)(1000/(30 * MAX_DIGITS_DISPLAYS))),
             pdTRUE,  //Autoreload
             NULL,   //TimerID, data to be passed to the callback function
-            SevenSegDisplays::tmrCbRefresh  //Callback function
+            SevenSeg74HC595::tmrCbRefresh  //Callback function
         );
     }
 
@@ -90,7 +90,7 @@ bool SevenSegDisplays::begin(){
         // Include the object's pointer to the array of pointers to be serviced by the timer Callback, 
         // If this is the first instance created, create the array of instances in Heap    
         if(_instancesLstPtr == nullptr){
-            _instancesLstPtr = new SevenSegDisplays* [_dspPtrArrLngth];
+            _instancesLstPtr = new SevenSeg74HC595* [_dspPtrArrLngth];
             for(int i{0}; i < _dspPtrArrLngth; i++)
                 *(_instancesLstPtr + i) = nullptr;
         }            
@@ -122,7 +122,7 @@ bool SevenSegDisplays::begin(){
     return result;
 }
 
-bool SevenSegDisplays::blink(){
+bool SevenSeg74HC595::blink(){
    bool result {false};
 
    if (!_blinking){
@@ -135,7 +135,7 @@ bool SevenSegDisplays::blink(){
    return result;
 }
 
-bool SevenSegDisplays::blink(const unsigned long &onRate, const unsigned long &offRate){
+bool SevenSeg74HC595::blink(const unsigned long &onRate, const unsigned long &offRate){
     bool result {false};
 
    if (!_blinking){
@@ -150,7 +150,7 @@ bool SevenSegDisplays::blink(const unsigned long &onRate, const unsigned long &o
    return result;
 }
 
-void SevenSegDisplays::clear(){
+void SevenSeg74HC595::clear(){
    //Cleans the contents of the internal display buffer (All leds off for all digits)
    for (int i{0}; i < _dspDigits; i++){
       *(_digitPtr + i) = _space;
@@ -160,7 +160,7 @@ void SevenSegDisplays::clear(){
    return;
 }
 
-bool SevenSegDisplays::doubleGauge(const int &levelLeft, const int &levelRight, char labelLeft, char labelRight){
+bool SevenSeg74HC595::doubleGauge(const int &levelLeft, const int &levelRight, char labelLeft, char labelRight){
     bool displayable{true};
     String readOut{""};
 
@@ -213,7 +213,7 @@ bool SevenSegDisplays::doubleGauge(const int &levelLeft, const int &levelRight, 
     return displayable;
 }
 
-void SevenSegDisplays::fastRefresh(){
+void SevenSeg74HC595::fastRefresh(){
    bool tmpLogic {true};
 
    updBlinkState();
@@ -236,7 +236,7 @@ void SevenSegDisplays::fastRefresh(){
    return;
 }
 
-void SevenSegDisplays::fastSend(uint8_t content){
+void SevenSeg74HC595::fastSend(uint8_t content){
     //Sends the byte value (char <=> unsigned short int) to the 4 7-segment display bit by bit
     //by direct manipulation of the microcontroller pins. There is no time added, so the total time
     //consumed to shift an entire byte is supposed to be the lowest achievable in this level of abstraction.
@@ -255,7 +255,7 @@ void SevenSegDisplays::fastSend(uint8_t content){
     return;
 }
 
-void SevenSegDisplays::fastSend(const uint8_t &segments, const uint8_t &port){
+void SevenSeg74HC595::fastSend(const uint8_t &segments, const uint8_t &port){
     // Sends the character 'segments' to the digit 'port' of the display
     // Content and Port must be sent in two sequencial parts, character first, port second
     // so this overloaded two char fastSend() method uses the one char fastSend() method twice and then moves
@@ -270,7 +270,7 @@ void SevenSegDisplays::fastSend(const uint8_t &segments, const uint8_t &port){
     return;
 }
 
-bool SevenSegDisplays::gauge(const int &level, char label){
+bool SevenSeg74HC595::gauge(const int &level, char label){
     bool displayable{true};
     String readOut{""};
 
@@ -302,7 +302,7 @@ bool SevenSegDisplays::gauge(const int &level, char label){
     return displayable;
 }
 
-bool SevenSegDisplays::gauge(const double &level, char label) {
+bool SevenSeg74HC595::gauge(const double &level, char label) {
     bool displayable{true};
     int intLevel{0};
 
@@ -325,47 +325,47 @@ bool SevenSegDisplays::gauge(const double &level, char label) {
     return displayable;
 }
 
-uint8_t SevenSegDisplays::getDigitsQty(){
+uint8_t SevenSeg74HC595::getDigitsQty(){
 
     return _dspDigits;
 }
 
-uint32_t SevenSegDisplays::getDspValMax(){
+uint32_t SevenSeg74HC595::getDspValMax(){
 
     return _dspValMax;
 }
 
-uint32_t SevenSegDisplays::getDspValMin(){
+uint32_t SevenSeg74HC595::getDspValMin(){
 
     return _dspValMin;
 }
 
-uint8_t SevenSegDisplays::getInstanceNbr(){
+uint8_t SevenSeg74HC595::getInstanceNbr(){
 
     return _dispInstNbr;
 }
 
-unsigned long SevenSegDisplays::getMaxBlinkRate(){
+unsigned long SevenSeg74HC595::getMaxBlinkRate(){
     
     return _maxBlinkRate;
 }
 
-unsigned long  SevenSegDisplays::getMinBlinkRate(){
+unsigned long  SevenSeg74HC595::getMinBlinkRate(){
 
     return _minBlinkRate;
 }
 
-bool SevenSegDisplays::isBlinking(){
+bool SevenSeg74HC595::isBlinking(){
 
    return _blinking;
 }
 
-bool SevenSegDisplays::isWaiting(){
+bool SevenSeg74HC595::isWaiting(){
 
     return _waiting;
 }
 
-bool SevenSegDisplays::noBlink(){
+bool SevenSeg74HC595::noBlink(){
    bool result {false};
 
    if(_blinking){
@@ -378,7 +378,7 @@ bool SevenSegDisplays::noBlink(){
    return result;
 }
 
-bool SevenSegDisplays::noWait(){
+bool SevenSeg74HC595::noWait(){
    bool result {false};
 
    if (_waiting){
@@ -391,7 +391,7 @@ bool SevenSegDisplays::noWait(){
    return result;
 }
 
-bool SevenSegDisplays::print(String text){
+bool SevenSeg74HC595::print(String text){
     bool displayable{true};
     int position{-1};
     String tempText{""};
@@ -439,7 +439,7 @@ bool SevenSegDisplays::print(String text){
     return displayable;
 }
 
-bool SevenSegDisplays::print(const int32_t &value, bool rgtAlgn, bool zeroPad){
+bool SevenSeg74HC595::print(const int32_t &value, bool rgtAlgn, bool zeroPad){
     bool displayable{true};
     String readOut{""};
 
@@ -468,7 +468,7 @@ bool SevenSegDisplays::print(const int32_t &value, bool rgtAlgn, bool zeroPad){
     return displayable;
 }
 
-bool SevenSegDisplays::print(const double &value, const unsigned int &decPlaces, bool rgtAlgn, bool zeroPad){
+bool SevenSeg74HC595::print(const double &value, const unsigned int &decPlaces, bool rgtAlgn, bool zeroPad){
     bool displayable{true};
     String readOut{""};
     String pad{""};
@@ -511,7 +511,7 @@ bool SevenSegDisplays::print(const double &value, const unsigned int &decPlaces,
     return displayable;
 }
 
-void SevenSegDisplays::refresh(){
+void SevenSeg74HC595::refresh(){
    bool tmpLogic {true};
    uint8_t tmpDigToSend{0};
 
@@ -543,14 +543,14 @@ void SevenSegDisplays::refresh(){
     return;
 }
 
-void SevenSegDisplays::resetBlinkMask(){
+void SevenSeg74HC595::resetBlinkMask(){
    for (uint8_t i{0}; i < _dspDigits; i++)
       *(_blinkMaskPtr + i) = true;
 
    return;
 }
 
-void SevenSegDisplays::send(const uint8_t &content){
+void SevenSeg74HC595::send(const uint8_t &content){
     //Sends the byte value (char <=> unsigned short int) to the 4 7-segment display bit by bit
     //by using the shiftOut() function. The time added (or not) to send it bit is unknown, so the total time
     //consumed to shift an entire byte is unknown, issue that must be considered when the method is invoked 
@@ -560,7 +560,7 @@ void SevenSegDisplays::send(const uint8_t &content){
     return;
 }
 
-void SevenSegDisplays::send(const uint8_t &segments, const uint8_t &port){
+void SevenSeg74HC595::send(const uint8_t &segments, const uint8_t &port){
 // Sends the character 'segments' to the digit 'port' of the display
 // Content and Port must be sent in two sequencial parts, character first, port second
 // so this overloaded two char send method uses the one char send method twice and then moves
@@ -575,14 +575,14 @@ void SevenSegDisplays::send(const uint8_t &segments, const uint8_t &port){
 }
 
 
-void SevenSegDisplays::setBlinkMask(const bool blnkPort[]){
+void SevenSeg74HC595::setBlinkMask(const bool blnkPort[]){
    for (int i{0}; i < _dspDigits; i++)
       *(_blinkMaskPtr + i) = blnkPort[i];
 
     return;
 }
 
-bool SevenSegDisplays::setBlinkRate(const unsigned long &newOnRate, const unsigned long &newOffRate){
+bool SevenSeg74HC595::setBlinkRate(const unsigned long &newOnRate, const unsigned long &newOffRate){
     bool result {false};
     
     if ((newOnRate >= _minBlinkRate) && newOnRate <= _maxBlinkRate) {
@@ -602,7 +602,7 @@ bool SevenSegDisplays::setBlinkRate(const unsigned long &newOnRate, const unsign
     return result;  
 }
 
-bool SevenSegDisplays::setDigitsOrder(uint8_t* newOrderPtr){
+bool SevenSeg74HC595::setDigitsOrder(uint8_t* newOrderPtr){
     bool result{true};
 
     for(int i {0}; i < _dspDigits; i++){
@@ -620,7 +620,7 @@ bool SevenSegDisplays::setDigitsOrder(uint8_t* newOrderPtr){
     return result;
 }
 
-bool SevenSegDisplays::setWaitChar (const char &newChar){
+bool SevenSeg74HC595::setWaitChar (const char &newChar){
     bool result {false};
     int position {-1};
 
@@ -638,7 +638,7 @@ bool SevenSegDisplays::setWaitChar (const char &newChar){
    return result;
 }
 
-bool SevenSegDisplays::setWaitRate(const unsigned long &newWaitRate){
+bool SevenSeg74HC595::setWaitRate(const unsigned long &newWaitRate){
     bool result {false};
 
     if ((newWaitRate >= _minBlinkRate) && newWaitRate <= _maxBlinkRate) {
@@ -652,7 +652,7 @@ bool SevenSegDisplays::setWaitRate(const unsigned long &newWaitRate){
     return result;
 }
 
-bool SevenSegDisplays::stop() {
+bool SevenSeg74HC595::stop() {
     //This object's pointer will be deleted from the arrays of pointers. If the array has no more valid pointers the timer will be stopped to avoid loosing processing time.
     bool pointersFound(false);
     bool result {false};
@@ -685,8 +685,8 @@ bool SevenSegDisplays::stop() {
     return result;
 }
 
-void SevenSegDisplays::tmrCbRefresh(TimerHandle_t dspTmrCbArg){
-   SevenSegDisplays **argObj = (SevenSegDisplays**)pvTimerGetTimerID(dspTmrCbArg);
+void SevenSeg74HC595::tmrCbRefresh(TimerHandle_t dspTmrCbArg){
+   SevenSeg74HC595 **argObj = (SevenSeg74HC595**)pvTimerGetTimerID(dspTmrCbArg);
    //Timer Callback to keep the display lit by calling each display's fastRefresh() method
     
     for(uint8_t i {0}; i < _dspPtrArrLngth; i++){
@@ -697,7 +697,7 @@ void SevenSegDisplays::tmrCbRefresh(TimerHandle_t dspTmrCbArg){
     return;
 }
 
-void SevenSegDisplays::updBlinkState(){
+void SevenSeg74HC595::updBlinkState(){
    //The use of a xTimer that keeps flip-floping the _blinkShowOn value is better suited for symmetrical blinking, but not for assymetrical cases.
    if (_blinking == true){
       if (_blinkShowOn == false) {
@@ -726,7 +726,7 @@ void SevenSegDisplays::updBlinkState(){
    return;
 }
 
-void SevenSegDisplays::updWaitState(){
+void SevenSeg74HC595::updWaitState(){
    if (_waiting == true){
       if (_waitTimer == 0){
          for (int i{0}; i < _dspDigits; i++)
@@ -751,7 +751,7 @@ void SevenSegDisplays::updWaitState(){
    return;
 }
 
-bool SevenSegDisplays::wait(const unsigned long &newWaitRate){
+bool SevenSeg74HC595::wait(const unsigned long &newWaitRate){
    bool result {true};
    
    if (_waiting == false){
@@ -777,7 +777,7 @@ bool SevenSegDisplays::wait(const unsigned long &newWaitRate){
    return result;
 }
 
-bool SevenSegDisplays::write(const uint8_t &segments, const uint8_t &port){
+bool SevenSeg74HC595::write(const uint8_t &segments, const uint8_t &port){
     bool result {false};
     
     if (port < _dspDigits){
@@ -788,7 +788,7 @@ bool SevenSegDisplays::write(const uint8_t &segments, const uint8_t &port){
     return result;
 }
 
-bool SevenSegDisplays::write(const String &character, const uint8_t &port){
+bool SevenSeg74HC595::write(const String &character, const uint8_t &port){
     bool result {false};
     int position {-1};
     
@@ -803,84 +803,6 @@ bool SevenSegDisplays::write(const String &character, const uint8_t &port){
 
     return result;
 }
-
-//============================================================> Class methods separator
-
-// SevenSeg74HC595::SevenSeg74HC595(uint8_t sclk, uint8_t rclk, uint8_t dio, bool commAnode, const uint8_t dspDigits)
-// :SevenSegDisplays(sclk, rclk, dio, commAnode, dspDigits)
-// {
-// }
-
-// SevenSeg74HC595::~SevenSeg74HC595(){
-// }
-
-// void SevenSeg74HC595::fastSend(uint8_t content){
-//     //Sends the byte value (char <=> unsigned short int) to the 4 7-segment display bit by bit
-//     //by direct manipulation of the microcontroller pins. There is no time added, so the total time
-//     //consumed to shift an entire byte is supposed to be the lowest achievable in this level of abstraction.
-//     //So this is the method suggested to be called from an ISR to keep the ISR time consumed to the lowest
-
-//     for (int i {7}; i >= 0; i--){   //Send each of the 8 bits representing the character
-//         if (content & 0x80)
-//             digitalWrite(_dio, HIGH);
-//         else
-//             digitalWrite(_dio, LOW);
-//         content <<= 1;
-//         digitalWrite(_sclk, LOW);
-//         digitalWrite(_sclk, HIGH);
-//     }
-
-//     return;
-// }
-
-// void SevenSeg74HC595::fastSend(const uint8_t &segments, const uint8_t &port){
-//     // Sends the character 'segments' to the digit 'port' of the display
-//     // Content and Port must be sent in two sequencial parts, character first, port second
-//     // so this overloaded two char fastSend() method uses the one char fastSend() method twice and then moves
-//     // up the RCLK pin to present the content in the shift register. This method doesn't add time delays, 
-//     //So this is the method suggested to be called from an ISR to keep the ISR time consumed to the lowest
-
-//     digitalWrite(_rclk, LOW);
-//     fastSend(segments);
-//     fastSend(port);
-//     digitalWrite(_rclk, HIGH);
-
-//     return;
-// }
-
-// void SevenSeg74HC595::send(const uint8_t &content){
-//     //Sends the byte value (char <=> unsigned short int) to the 4 7-segment display bit by bit
-//     //by using the shiftOut() function. The time added (or not) to send it bit is unknown, so the total time
-//     //consumed to shift an entire byte is unknown, issue that must be considered when the method is invoked 
-//     //from an ISR and multiple times depending on the qty of displays being used
-//     shiftOut(_dio, _sclk, MSBFIRST, content);
-
-//     return;
-// }
-
-// void SevenSeg74HC595::send(const uint8_t &segments, const uint8_t &port){
-// // Sends the character 'segments' to the digit 'port' of the display
-// // Content and Port must be sent in two sequencial parts, character first, port second
-// // so this overloaded two char send method uses the one char send method twice and then moves
-// // up the RCLK pin to present the content in the shift register. This method depends on the shiftOut() function
-// // so consumed time must be considered
-//     digitalWrite(_rclk, LOW);
-//     send(segments);
-//     send(port);
-//     digitalWrite(_rclk, HIGH);
-
-//     return;
-// }
-
-
-//============================================================> Class methods separator
-
-// SevenSegTM1637::SevenSegTM1637(uint8_t clk, uint8_t dio, bool commAnode, const uint8_t dspDigits)
-// {
-// }
-
-// SevenSegTM1637::~SevenSegTM1637(){
-// }
 
 //============================================================> Class methods separator
 
@@ -909,7 +831,6 @@ void ClickCounter::clear(){
 
     return;
 }
-
 
 bool ClickCounter::countBegin(int32_t startVal){
    bool result{false};

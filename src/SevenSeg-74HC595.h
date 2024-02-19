@@ -2,10 +2,10 @@
 #define SEVENSEG_74HC595_H
 #include <Arduino.h>
 
-class SevenSegDisplays {
+class SevenSeg74HC595 {
     static uint8_t _displaysCount;
     static uint8_t _dspPtrArrLngth;
-    static SevenSegDisplays** _instancesLstPtr;
+    static SevenSeg74HC595** _instancesLstPtr;
     static void tmrCbRefresh(TimerHandle_t dspTmrCbArg);
     static TimerHandle_t _dspRfrshTmrHndl;
 
@@ -31,7 +31,7 @@ protected:
 
     const unsigned long _minBlinkRate{100};
     const unsigned long _maxBlinkRate{2000};
-    SevenSegDisplays* _dispInstance;
+    SevenSeg74HC595* _dispInstance;
     uint8_t _dispInstNbr{0};
     uint8_t _firstRefreshed{0};
     bool _blinking{false};
@@ -101,9 +101,9 @@ protected:
     void updWaitState();
 
 public:
-    SevenSegDisplays();
-    SevenSegDisplays(uint8_t sclk, uint8_t rclk, uint8_t dio, bool commAnode = true, const uint8_t dspDigits = 4);
-    ~SevenSegDisplays();
+    SevenSeg74HC595();
+    SevenSeg74HC595(uint8_t sclk, uint8_t rclk, uint8_t dio, bool commAnode = true, const uint8_t dspDigits = 4);
+    ~SevenSeg74HC595();
     bool begin();
     bool blink();
     bool blink(const unsigned long &onRate, const unsigned long &offRate = 0);
@@ -143,30 +143,9 @@ public:
 
 //============================================================> Class declarations separator
 
-// class SevenSeg74HC595: public SevenSegDisplays{
-// protected:
-//     // void fastSend(uint8_t content);
-//     void send(const uint8_t &content);
-
-// public:
-//     SevenSeg74HC595(uint8_t sclk, uint8_t rclk, uint8_t dio, bool commAnode = true, const uint8_t dspDigits = 4);
-//     ~SevenSeg74HC595();
-
-// };
-
-//============================================================> Class declarations separator
-
-// class SevenSegTM1637: public SevenSegDisplays{
-// public:
-// SevenSegTM1637(uint8_t clk, uint8_t dio, bool commAnode = true, const uint8_t dspDigits = 4);
-// ~SevenSegTM1637();
-// };
-
-//============================================================> Class declarations separator
-
 class ClickCounter{
 private:
-    SevenSegDisplays _display;
+    SevenSeg74HC595 _display;
     int _count{0};
     int _beginStartVal{0};
     bool _countRgthAlgn{true};
