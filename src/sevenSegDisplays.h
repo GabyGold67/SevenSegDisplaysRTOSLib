@@ -1,11 +1,11 @@
-#ifndef SEVENSEG_74HC595_H
-#define SEVENSEG_74HC595_H
+#ifndef sevenSegDisplays_H
+#define sevenSegDisplays_H
 #include <Arduino.h>
 
-class SevenSeg74HC595 {
+class SevenSegDisplays {
     static uint8_t _displaysCount;
     static uint8_t _dspPtrArrLngth;
-    static SevenSeg74HC595** _instancesLstPtr;
+    static SevenSegDisplays** _instancesLstPtr;
     static void tmrCbRefresh(TimerHandle_t dspTmrCbArg);
     static TimerHandle_t _dspRfrshTmrHndl;
 
@@ -17,12 +17,15 @@ private:
     unsigned long _waitTimer {0};
 
 protected:
-    uint8_t _sclk;
-    uint8_t _rclk;
-    uint8_t _dio;
-    bool _commAnode {true};
+    SevenSegDispHw _dispHw{};    
+    uint8_t* _ioPins[3];
+
+    // uint8_t _sclk;
+    // uint8_t _rclk;
+    // uint8_t _dio;
+    // bool _commAnode {true};
     const uint8_t _dspDigits{};
-    uint8_t* _digitPosPtr{nullptr};
+    // uint8_t* _digitPosPtr{nullptr};
     uint8_t* _digitPtr{nullptr};
     bool* _blinkMaskPtr{nullptr};
 
@@ -31,8 +34,8 @@ protected:
 
     const unsigned long _minBlinkRate{100};
     const unsigned long _maxBlinkRate{2000};
-    SevenSeg74HC595* _dispInstance;
-    uint8_t _dispInstNbr{0};
+    SevenSegDisplays* _dspInstance;
+    uint8_t _dspInstNbr{0};
     uint8_t _firstRefreshed{0};
     bool _blinking{false};
     bool _blinkShowOn{false};
@@ -95,22 +98,23 @@ protected:
     String _spacePadding{""};
 
     void setAttrbts();
-    void fastSend(uint8_t content);
-    void send(const uint8_t &content);
+    // void fastSend(uint8_t content);
+    // void send(const uint8_t &content);
     void updBlinkState();
     void updWaitState();
 
 public:
-    SevenSeg74HC595();
-    SevenSeg74HC595(uint8_t sclk, uint8_t rclk, uint8_t dio, bool commAnode = true, const uint8_t dspDigits = 4);
-    ~SevenSeg74HC595();
+    SevenSegDisplays();
+    // SevenSegDisplays(uint8_t sclk, uint8_t rclk, uint8_t dio, bool commAnode = true, const uint8_t dspDigits = 4);
+    SevenSegDisplays(SevenSegDispHw dspHw, uint8_t ioPins, bool commAnode = true, const uint8_t dspDigits = 4);
+    ~SevenSegDisplays();
     bool begin();
     bool blink();
     bool blink(const unsigned long &onRate, const unsigned long &offRate = 0);
     void clear();
     bool doubleGauge(const int &levelLeft, const int &levelRight, char labelLeft = ' ', char labelRight = ' ');
     void fastRefresh();
-    void fastSend(const uint8_t &segments, const uint8_t &port);
+    // void fastSend(const uint8_t &segments, const uint8_t &port);
     bool gauge(const int &level, char label = ' ');
     bool gauge(const double &level, char label = ' ');
     uint8_t getDigitsQty();
@@ -128,7 +132,7 @@ public:
     bool print(const double &value, const unsigned int &decPlaces, bool rgtAlgn = false, bool zeroPad = false);
     void refresh();
     void resetBlinkMask();
-    void send(const uint8_t &segments, const uint8_t &port);
+    // void send(const uint8_t &segments, const uint8_t &port);
     void setBlinkMask(const bool blnkPort[]);
     bool setBlinkRate(const unsigned long &newOnRate, const unsigned long &newOffRate = 0);
     bool setDigitsOrder(uint8_t* newOrderPtr);
@@ -145,7 +149,7 @@ public:
 
 class ClickCounter{
 private:
-    SevenSeg74HC595 _display;
+    SevenSegDisplays _display;
     int _count{0};
     int _beginStartVal{0};
     bool _countRgthAlgn{true};
