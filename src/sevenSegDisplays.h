@@ -4,17 +4,16 @@
 #include <Arduino.h>
 #include <SevenSegDispHw.h>
 
+const int MAX_DIGITS_DISPLAYS{8};
+
 class SevenSegDisplays {
     static uint8_t _displaysCount;
     static uint8_t _dspPtrArrLngth;
     static SevenSegDisplays** _instancesLstPtr;
-    // static void tmrCbRefresh(TimerHandle_t rfrshTmrCbArg);
-    // static TimerHandle_t _dspRfrshTmrHndl;
     static void tmrCbWait(TimerHandle_t waitTmrCbArg);
     static void tmrCbBlink(TimerHandle_t blinkTmrCbArg);
     static TimerHandle_t _blinkTmrHndl;  //====>> For future use
     static TimerHandle_t _waitTmrHndl;   //====>> For future use
-
 
 private:
     uint8_t _waitChar {0xBF};
@@ -24,24 +23,15 @@ private:
     unsigned long _waitTimer {0};
 
 protected:
-    // uint8_t _sclk;
-    // uint8_t _rclk;
-    // uint8_t _dio;
-    // bool _commAnode {true};
-    // uint8_t* _digitPosPtr{nullptr};
-    // void fastSend(uint8_t content);
-    // uint8_t _firstRefreshed{0};
-    // uint8_t* _ioPins[3];
-    // void send(const uint8_t &content);
-
     const unsigned long _minBlinkRate{100};
     const unsigned long _maxBlinkRate{2000};
 
     bool* _blinkMaskPtr{nullptr};
+    uint8_t* _dspAuxBuffPtr{nullptr};
+    bool _dspBuffChng{false};
     uint8_t* _dspBuffPtr{nullptr};
     uint8_t _dspDigitsQty{};
-    SevenSegDispHw* _dspHwPtr{};    
-    // SevenSegDispHw _dspHw{};      //====>> For future use
+    SevenSegDispHw _dspUndrlHw{};      //====>> For future use
     SevenSegDisplays* _dspInstance;
     uint8_t _dspInstNbr{0};
     int32_t _dspValMax{};
@@ -52,6 +42,8 @@ protected:
     unsigned long _blinkTimer{0};
     unsigned long _blinkOffRate{500};
     unsigned long _blinkOnRate{500};
+    unsigned long _blinkRatesGCD{0};  //Holds the value for the minimum timer checking the change ON/OFF of the blinking, 
+                                        //saving uneeded timer interruptions, and without the need of the std::gcd function
     
     String _charSet{"0123456789AabCcdEeFGHhIiJLlnOoPqrStUuY-_=~* ."}; // for using indexOf() method
     uint8_t _charLeds[45] = {   //Values valid for a Common Anode display. For a Common Cathode display values must be logically bit negated
@@ -107,25 +99,18 @@ protected:
     String _zeroPadding{""};
     String _spacePadding{""};
 
+    unsigned long blinkTmrGCD(unsigned long blnkOnTm, unsigned long blnkOffTm);
+    void restoreDspBuff();
+    void saveDspBuff();
     void setAttrbts();
     void updBlinkState();
     void updWaitState();
 
 public:
-    // SevenSegDisplays(SevenSegDispHw* dspHwPtr, uint8_t* ioPins);
-    // void fastSend(const uint8_t &segments, const uint8_t &port);
     // uint8_t getDigitsQty();
-    // void fastRefresh();
-    // void refresh();
-    // void send(const uint8_t &segments, const uint8_t &port);
-    // bool setDigitsOrder(uint8_t* newOrderPtr);
-    // bool stop();
-
     SevenSegDisplays();
-    SevenSegDisplays(SevenSegDispHw* dspHwPtr);
-    // SevenSegDisplays(SevenSegDispHw dspHw);  //====>> For future use
+    SevenSegDisplays(SevenSegDispHw dspUndrlHw);
     ~SevenSegDisplays();
-    // bool begin();
     bool blink();
     bool blink(const unsigned long &onRate, const unsigned long &offRate = 0);
     void clear();
@@ -137,6 +122,7 @@ public:
     uint8_t getInstanceNbr();
     unsigned long getMaxBlinkRate();
     unsigned long getMinBlinkRate();
+    bool isBlank();
     bool isBlinking();
     bool isWaiting();
     bool noBlink();
@@ -145,7 +131,7 @@ public:
     bool print(const int32_t &value, bool rgtAlgn = false, bool zeroPad = false);
     bool print(const double &value, const unsigned int &decPlaces, bool rgtAlgn = false, bool zeroPad = false);
     void resetBlinkMask();
-    void setBlinkMask(const bool blnkPort[]);
+    void setBlinkMask(const bool* blnkMsk);
     bool setBlinkRate(const unsigned long &newOnRate, const unsigned long &newOffRate = 0);
     bool setWaitChar (const char &newChar);
     bool setWaitRate(const unsigned long &newWaitRate);

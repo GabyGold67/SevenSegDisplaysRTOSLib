@@ -1,19 +1,29 @@
 #include "Arduino.h"
 #include "sevenSegDispHw.h"
 
+const int MAX_DIGITS_DISPLAYS{8};
 const uint8_t diyMore8Bits[8] {3, 2, 1, 0, 7, 6, 5, 4};
 const uint8_t noName4Bits[4] {0, 1, 2, 3};
 
+SevenSegDynamic** SevenSegDynamic::_DynDspInstncsLstPtr{nullptr};
 TimerHandle_t SevenSegDynamic::_dspRfrshTmrHndl = nullptr;
+
+//============================================================> Class methods separator
 
 SevenSegDispHw::SevenSegDispHw() {}
 
 SevenSegDispHw::SevenSegDispHw(uint8_t* ioPins, uint8_t dspDigits, bool commAnode)
-: _dspDigitsQty {dspDigits}, _commAnode {commAnode}
+: _digitPosPtr{new uint8_t[dspDigits]}, _dspDigitsQty {dspDigits}, _commAnode {commAnode}
 {
+    for (uint8_t i{0}; i < _dspDigitsQty; i++){
+        *(_digitPosPtr + i) = i;
+    }
 }
 
-SevenSegDispHw::~SevenSegDispHw(){}
+SevenSegDispHw::~SevenSegDispHw()
+{
+    delete [] _digitPosPtr;
+}
 
 bool SevenSegDispHw::getCommAnnode(){
 
@@ -43,21 +53,17 @@ bool SevenSegDispHw::setDigitsOrder(uint8_t* newOrderPtr){
     return result;
 }
 
+void SevenSegDispHw::setDspBuffPtr(uint8_t* newDspBuffPtr){
+    _dspBuffPtr = newDspBuffPtr;
+
+    return;
+}
+
 //============================================================> Class methods separator
 
 SevenSegDynamic::SevenSegDynamic(){}
 
 SevenSegDynamic::~SevenSegDynamic(){}
-
-void SevenSegDynamic::fastSend(uint8_t content){
-
-    return;
-}
-
-void SevenSegDynamic::fastSend(const uint8_t &segments, const uint8_t &port){
-
-   return;
-}
 
 bool SevenSegDynamic::begin(){
     bool result {false};
@@ -79,25 +85,25 @@ bool SevenSegDynamic::begin(){
     if (_dspRfrshTmrHndl != NULL){
         // Include the object's pointer to the array of pointers to be serviced by the timer Callback, 
         // If this is the first instance created, create the array of instances in Heap    
-        if(_instancesLstPtr == nullptr){
-            _instancesLstPtr = new SevenSegDisplays* [_dspPtrArrLngth];
+        if(_DynDspInstncsLstPtr == nullptr){
+            _DynDspInstncsLstPtr = new SevenSegDynamic* [_dspPtrArrLngth];
             for(int i{0}; i < _dspPtrArrLngth; i++)
-                *(_instancesLstPtr + i) = nullptr;
+                *(_DynDspInstncsLstPtr + i) = nullptr;
         }            
         //Look for a free slot in the array of pointers to displays to be refreshed or find if the display is already in the array
         for(uint8_t i {0}; i < _dspPtrArrLngth; i++){
-            if (*(_instancesLstPtr + i) == nullptr){    //Save the first free slot of the list in case it's needed later
+            if (*(_DynDspInstncsLstPtr + i) == nullptr){    //Save the first free slot of the list in case it's needed later
                 if(frstFreeSlot == -1)
                     frstFreeSlot = i;
             }
-            else if (*(_instancesLstPtr + i) == _dspInstance){
+            else if (*(_DynDspInstncsLstPtr + i) == _dspInstance){
                 result = true;  //The display was included in the list of instances to keep refreshed
                 break;
             }        
         }
         if(!result){    // The pointer to this object wasn't in the list, so it must be added
             if(frstFreeSlot > -1){
-                *(_instancesLstPtr + frstFreeSlot) = _dspInstance;
+                *(_DynDspInstncsLstPtr + frstFreeSlot) = _dspInstance;
                 result = true;
             }
         }
@@ -145,17 +151,27 @@ void SevenSegDynamic::refresh(){
     return;
 }
 
+void SevenSegDynamic::send(uint8_t content){    // Implementation is hardware dependant (subclasses) protocol!!
+
+    return;
+}
+
+void SevenSegDynamic::send(const uint8_t &segments, const uint8_t &port){
+
+   return;
+}
+
 bool SevenSegDynamic::stop() {
     //This object's pointer will be deleted from the arrays of pointers. If the array has no more valid pointers the timer will be stopped to avoid loosing processing time.
     bool pointersFound(false);
     bool result {false};
 
     for(uint8_t i {0}; i < _dspPtrArrLngth; i++){
-        if (*(_instancesLstPtr + i) == _dspInstance){
-            *(_instancesLstPtr + i) = nullptr;
+        if (*(_DynDspInstncsLstPtr + i) == _dspInstance){
+            *(_DynDspInstncsLstPtr + i) = nullptr;
             result = true;
         }
-        else if (*(_instancesLstPtr + i) != nullptr){
+        else if (*(_DynDspInstncsLstPtr + i) != nullptr){
             // There are still objects pointers in the vector, so the refresh display services must continue active
             pointersFound = true;
             if(result)
@@ -165,8 +181,8 @@ bool SevenSegDynamic::stop() {
 
     if (!pointersFound){
         //There are no more display instances active, there's no point in keeping the ISR active, the timer is stopped and the interrupt service detached
-        delete [] _instancesLstPtr;
-        _instancesLstPtr = nullptr;
+        delete [] _DynDspInstncsLstPtr;
+        _DynDspInstncsLstPtr = nullptr;
         
         if(_dspRfrshTmrHndl){   //if the timer still exists and is running, stop and delete
             xTimerStop(_dspRfrshTmrHndl, portMAX_DELAY);
@@ -178,7 +194,7 @@ bool SevenSegDynamic::stop() {
     return result;
 }
 
-void SevenSegDynamic::tmrCbRefresh(TimerHandle_t waitTmrCbArg){
+void SevenSegDynamic::tmrCbRefresh(TimerHandle_t rfrshTmrCbArg){
 /*   SevenSegDisplays **argObj = (SevenSegDisplays**)pvTimerGetTimerID(rfrshTmrCbArg);
    //Timer Callback to keep the display lit by calling each display's fastRefresh() method
     
@@ -200,8 +216,9 @@ SevenSegStatic::~SevenSegStatic() {}
 //============================================================> Class methods separator
 
 SevenSegHC595Dyn::SevenSegHC595Dyn(uint8_t* ioPins, uint8_t dspDigits, bool commAnode)
-:_ioPins{ioPins}
+// :_ioPins{ioPins}
 {    
+    _ioPins = ioPins;
     SevenSegDispHw(ioPins, dspDigits, commAnode);
     pinMode(*(_ioPins + _sclk), OUTPUT);
     pinMode(*(_ioPins + _rclk), OUTPUT);
@@ -212,7 +229,7 @@ SevenSegHC595Dyn::~SevenSegHC595Dyn(){}
 
 
 
-void SevenSegHC595Dyn::fastSend(uint8_t content){
+void SevenSegHC595Dyn::send(uint8_t content){
     for (int i {7}; i >= 0; i--){   //Send each of the 8 bits representing the character
         if (content & 0x80)
             digitalWrite(*(_ioPins + _dio), HIGH);
@@ -227,11 +244,11 @@ void SevenSegHC595Dyn::fastSend(uint8_t content){
 
 }
 
-void SevenSegHC595Dyn::fastSend(const uint8_t &segments, const uint8_t &port){
+void SevenSegHC595Dyn::send(const uint8_t &segments, const uint8_t &port){
 
     digitalWrite(*(_ioPins + _rclk), LOW);
-    fastSend(segments);
-    fastSend(port);
+    send(segments);
+    send(port);
     digitalWrite(*(_ioPins + _rclk), HIGH);
 
    return;

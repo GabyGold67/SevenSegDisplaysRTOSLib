@@ -6,8 +6,10 @@
 
 class SevenSegDispHw{
 protected:
-    bool _commAnode {true}; //SevenSegDisplays objects will have to retrieve this info to build the right segments for each character
     const uint8_t _dspDigitsQty{}; //Display size in digits
+    bool _commAnode {true}; //SevenSegDisplays objects will have to retrieve this info to build the right segments for each character
+    
+    uint8_t* _dspBuffPtr{nullptr};
     uint8_t* _digitPosPtr{nullptr};
 public:
     SevenSegDispHw();
@@ -16,24 +18,29 @@ public:
     bool getCommAnnode();
     uint8_t getDspDigits();
     bool setDigitsOrder(uint8_t* newOrderPtr);
+    void setDspBuffPtr(uint8_t* newDspBuffPtr);
 
 };
 
 //============================================================> Class declarations separator
 
 class SevenSegDynamic: public SevenSegDispHw{
+    // static SevenSegDisplays** _instancesLstPtr;  //To be refactored line
+    static SevenSegDynamic** _DynDspInstncsLstPtr;
+
     static TimerHandle_t _dspRfrshTmrHndl;
     static void tmrCbRefresh(TimerHandle_t rfrshTmrCbArg);
 
 protected:
-    void fastSend(uint8_t content);
+    uint8_t* _ioPins{};
+    void send(uint8_t content);
     uint8_t _firstRefreshed{0};
 public:
     SevenSegDynamic();
     ~SevenSegDynamic();
     bool begin();
-    void fastSend(const uint8_t &segments, const uint8_t &port);
     void refresh();
+    void send(const uint8_t &segments, const uint8_t &port);
     bool stop();
 };
 
@@ -50,17 +57,17 @@ public:
 
 class SevenSegHC595Dyn: public SevenSegDynamic{
 private:
-    uint8_t* _ioPins{};
+    // uint8_t* _ioPins{};
     const uint8_t _sclk {0};
     const uint8_t _rclk {1};
     const uint8_t _dio {2};
 protected:
-    void fastSend(uint8_t content);
+    void send(uint8_t content);
 
 public:
     SevenSegHC595Dyn(uint8_t* ioPins, uint8_t dspDigits, bool commAnode);
     ~SevenSegHC595Dyn();
-    void fastSend(const uint8_t &segments, const uint8_t &port);
+    void send(const uint8_t &segments, const uint8_t &port);
 };
 
 //============================================================> Class declarations separator
