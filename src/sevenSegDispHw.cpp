@@ -118,6 +118,29 @@ bool SevenSegDynamic::begin(){
     return result;
 }
 
+/*void SevenSegDisplays::fastRefresh(){
+   bool tmpLogic {true};
+
+   updBlinkState();
+   updWaitState();
+   if ((_blinking == false) || (_blinkShowOn == true)) {
+    //   send(*(_dspBuffPtr + _firstRefreshed), uint8_t(1) << *(_digitPosPtr + _firstRefreshed));
+   }
+   else if(_blinking && !_blinkShowOn){
+      for(uint8_t i{0}; i<_dspHwPtr->getDspDigits(); i++)
+         tmpLogic = tmpLogic && *(_blinkMaskPtr + i);
+      if (!tmpLogic){   //At least one digit is set NOT TO BLINK
+         if(!*(_blinkMaskPtr + _firstRefreshed))
+            // send(*(_dspBuffPtr + _firstRefreshed), uint8_t(1) << *(_digitPosPtr + _firstRefreshed));
+      }
+   }
+   ++_firstRefreshed;
+   if (_firstRefreshed == _dspHwPtr->getDspDigits())
+      _firstRefreshed = 0;
+
+   return;
+}*/
+
 
 void SevenSegDynamic::refresh(){
    bool tmpLogic {true};

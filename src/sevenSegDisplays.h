@@ -5,15 +5,18 @@
 #include <SevenSegDispHw.h>
 
 const int MAX_DIGITS_DISPLAYS{8};
+const int MAX_DISPLAYS_QTY{10};
 
 class SevenSegDisplays {
     static uint8_t _displaysCount;
+    static uint16_t _dspSerialNum;
     static uint8_t _dspPtrArrLngth;
     static SevenSegDisplays** _instancesLstPtr;
+
     static void tmrCbWait(TimerHandle_t waitTmrCbArg);
     static void tmrCbBlink(TimerHandle_t blinkTmrCbArg);
-    static TimerHandle_t _blinkTmrHndl;  //====>> For future use
-    static TimerHandle_t _waitTmrHndl;   //====>> For future use
+    static TimerHandle_t _blinkTmrHndl;
+    static TimerHandle_t _waitTmrHndl;
 
 private:
     uint8_t _waitChar {0xBF};
@@ -31,7 +34,7 @@ protected:
     bool _dspBuffChng{false};
     uint8_t* _dspBuffPtr{nullptr};
     uint8_t _dspDigitsQty{};
-    SevenSegDispHw _dspUndrlHw{};      //====>> For future use
+    SevenSegDispHw _dspUndrlHw{};
     SevenSegDisplays* _dspInstance;
     uint8_t _dspInstNbr{0};
     int32_t _dspValMax{};
@@ -131,7 +134,7 @@ public:
     bool print(const int32_t &value, bool rgtAlgn = false, bool zeroPad = false);
     bool print(const double &value, const unsigned int &decPlaces, bool rgtAlgn = false, bool zeroPad = false);
     void resetBlinkMask();
-    void setBlinkMask(const bool* blnkMsk);
+    void setBlinkMask(const bool* newBlnkMsk);
     bool setBlinkRate(const unsigned long &newOnRate, const unsigned long &newOffRate = 0);
     bool setWaitChar (const char &newChar);
     bool setWaitRate(const unsigned long &newWaitRate);
@@ -157,18 +160,18 @@ public:
     bool blink();
     bool blink(const unsigned long &onRate, const unsigned long &offRate = 0);
     void clear();
-    bool countBegin(int32_t startVal = 0);
+    bool countBegin(int32_t startVal = 0);  //To be analyzed it's current need
     bool countDown(int32_t qty = 1);
     bool countReset();
     bool countRestart(int32_t restartValue = 0);
-    bool countStop();
+    bool countStop();   //To be analyzed it's current need
     bool countToZero(int32_t qty = 1);
     bool countUp(int32_t qty = 1);
     int32_t getCount();
     int32_t getStartVal();
     bool noBlink();
     bool setBlinkRate(const unsigned long &newOnRate, const unsigned long &newOffRate = 0);
-    bool updDisplay();
+    bool updDisplay();  //To be analyzed it's current need
 
 };
 
