@@ -145,24 +145,10 @@ void SevenSegDynamic::refresh(){
     // updBlinkState();
     // updWaitState();
 
-    if((_blinking == false) || (_blinkShowOn == true)){
         for (int i {0}; i < _dspDigitsQty; i++){
             tmpDigToSend = *(_dspBuffPtr + ((i + _firstRefreshed) % _dspDigitsQty));
             // send(tmpDigToSend, uint8_t(1) << *(_digitPosPtr + ((i + _firstRefreshed) % _dspDigitsQty)));
         }
-    }
-    else if(_blinking && !_blinkShowOn){
-      for(int i{0}; i < _dspDigitsQty; i++)
-         tmpLogic = tmpLogic && *(_blinkMaskPtr + ((i + _firstRefreshed) % _dspDigitsQty));
-        if (!tmpLogic){   //At least one digit is set NOT TO BLINK
-            for (int i {0}; i < _dspDigitsQty; i++){
-                if(!*(_blinkMaskPtr + ((i + _firstRefreshed) % _dspDigitsQty))){
-                    tmpDigToSend = *(_dspBuffPtr + ((i + _firstRefreshed) % _dspDigitsQty));
-                    // send(tmpDigToSend, 1 << *(_digitPosPtr + ((i + _firstRefreshed) % _dspDigitsQty)));
-                }
-            }
-        }
-    }
     ++_firstRefreshed;
     if (_firstRefreshed == _dspDigitsQty)
         _firstRefreshed = 0;
@@ -184,8 +170,14 @@ bool SevenSegDynamic::stop() {
     //This object's pointer will be deleted from the arrays of pointers. If the array has no more valid pointers the timer will be stopped to avoid loosing processing time.
     bool pointersFound(false);
     bool result {false};
+    /* This routine searching for the instance of the hardware display makes no sense anymore as
+    * each hardware display has its own entry on the software timer daemon, so there is NO:
+    * _ Saving of instances in the _dynDspInstncsLstPtr array
+    * _dspPtrArrLngth declaration, asignatios or increment/decrements whatsoever
+    * The following code will be commented out for analisys porposes as soon as the method is implemented to it's new format (refactoring)
+    */
 
-    for(uint8_t i {0}; i < _dspPtrArrLngth; i++){
+    /*for(uint8_t i {0}; i < _dspPtrArrLngth; i++){
         if (*(_dynDspInstncsLstPtr + i) == _dspInstance){
             *(_dynDspInstncsLstPtr + i) = nullptr;
             result = true;
@@ -196,7 +188,7 @@ bool SevenSegDynamic::stop() {
             if(result)
                 break;
         }
-    }
+    }*/
 
     if (!pointersFound){
         //There are no more display instances active, there's no point in keeping the ISR active, the timer is stopped and the interrupt service detached

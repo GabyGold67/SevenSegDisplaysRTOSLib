@@ -83,6 +83,18 @@ bool SevenSegDisplays::blink(){
     bool result {false};
     BaseType_t tmrModResult {pdFAIL};
 
+    //From the original code to set blinking digits on/off
+    // for(int i{0}; i < _dspDigitsQty; i++)
+    //     tmpLogic = tmpLogic && *(_blinkMaskPtr + ((i + _firstRefreshed) % _dspDigitsQty));
+    // if (!tmpLogic){   //At least one digit is set NOT TO BLINK
+    //     for (int i {0}; i < _dspDigitsQty; i++){
+    //         if(!*(_blinkMaskPtr + ((i + _firstRefreshed) % _dspDigitsQty))){
+    //             tmpDigToSend = *(_dspBuffPtr + ((i + _firstRefreshed) % _dspDigitsQty));
+    //             // send(tmpDigToSend, 1 << *(_digitPosPtr + ((i + _firstRefreshed) % _dspDigitsQty)));
+    //         }
+    //     }
+    // }
+
     if (!_blinking){
         //Create a valid unique Name for identifying the timer created
         char blnkTmrName[15];

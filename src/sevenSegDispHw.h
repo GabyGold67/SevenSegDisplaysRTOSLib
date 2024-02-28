@@ -41,7 +41,7 @@ protected:
     void send(const uint8_t &segments, const uint8_t &port);
     TimerHandle_t _svnSgDynTmrHndl{NULL};
 public:
-    // SevenSegDynamic();   //No diferentiated default constructor for this class yet!!
+    SevenSegDynamic();   //No diferentiated default constructor for this class yet!!
     ~SevenSegDynamic();
     bool begin();
     bool stop();
