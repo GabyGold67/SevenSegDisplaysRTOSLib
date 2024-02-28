@@ -1,5 +1,6 @@
 #include "sevenSegDisplays.h"
 
+
 uint8_t SevenSegDisplays::_displaysCount = 0;
 uint16_t SevenSegDisplays::_dspSerialNum = 0;
 uint8_t SevenSegDisplays::_dspPtrArrLngth = MAX_DISPLAYS_QTY;
@@ -8,7 +9,25 @@ SevenSegDisplays** SevenSegDisplays::_instancesLstPtr = nullptr;
 TimerHandle_t SevenSegDisplays::_blinkTmrHndl = NULL;
 TimerHandle_t SevenSegDisplays::_waitTmrHndl = nullptr;
 
+
+
 static void  tmrStaticCbBlink(TimerHandle_t blinkTmrCbArg){
+    SevenSegDispHw* SevenSegUndrlHw = (SevenSegDispHw*) blinkTmrCbArg;
+
+    // _ Confirm the condition _bliinking
+        // _blinking = true
+            // _ calculate time elapsed since last _blinkShowOn change
+            // if ((_blinkShowOn && _blinkTimer > _blinkOnRate) ||(!_blinkShowOn && _blinkTimer > _blinkOffRate))
+                //Swap _blinkShowOn
+                //Reset _blinkTimer
+                // if (_blinkShowOn)
+                    //Retrieve full lit buffer (from _dspAuxBuffer to _dspBuffer)
+                    //Blank Aux buffer
+                // else
+                    //Save _dspBuffer to _dspAuxBuffer
+                    //Blank designated positions of the _dspBuffer
+        //blinking = false
+            //Abnormal situation, define if stops the timer or/and other corrective measures
 
     return;
 }
@@ -24,7 +43,8 @@ SevenSegDisplays::SevenSegDisplays(SevenSegDispHw dspUndrlHw)
         _instancesLstPtr = new SevenSegDisplays*[_dspPtrArrLngth];
     if(_displaysCount < _dspPtrArrLngth){
         _dspDigitsQty = dspUndrlHw.getDspDigits();
-        _dspBuffPtr = new uint8_t[_dspDigitsQty];
+        // _dspBuffPtr = new uint8_t[_dspDigitsQty];
+        _dspBuffPtr = dspUndrlHw.getDspBuffPtr();
         _dspUndrlHw.setDspBuffPtr(_dspBuffPtr);
         _blinkMaskPtr = new bool[_dspDigitsQty];
         _dspInstNbr = _dspSerialNum++; //Attribute with no real value, as the value assigned might not be unique after destructing and constructin object!!

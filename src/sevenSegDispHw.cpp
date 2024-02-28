@@ -1,11 +1,22 @@
 #include "Arduino.h"
 #include "sevenSegDispHw.h"
 
+/*Prototype for a SevenSegDispHw classes and SUBClasses timer callback function
+static void  tmrStaticCbBlink(TimerHandle_t blinkTmrCbArg){
+    SevenSegDispHw* SevenSegUndrlHw = (SevenSegDispHw*) blinkTmrCbArg;
+
+    //***************
+
+    return;
+}*/
+
 const int MAX_DIGITS_DISPLAYS{8};
 const uint8_t diyMore8Bits[8] {3, 2, 1, 0, 7, 6, 5, 4};
 const uint8_t noName4Bits[4] {0, 1, 2, 3};
-
-SevenSegDynamic** SevenSegDynamic::_DynDspInstncsLstPtr{nullptr};
+//---------------------------------------------------------------
+uint16_t SevenSegDispHw::_dspHwSerialNum = 0;
+//---------------------------------------------------------------
+SevenSegDynamic** SevenSegDynamic::_dynDspInstncsLstPtr = nullptr;
 TimerHandle_t SevenSegDynamic::_dspRfrshTmrHndl = nullptr;
 
 //============================================================> Class methods separator
@@ -15,19 +26,26 @@ SevenSegDispHw::SevenSegDispHw() {}
 SevenSegDispHw::SevenSegDispHw(uint8_t* ioPins, uint8_t dspDigits, bool commAnode)
 : _digitPosPtr{new uint8_t[dspDigits]}, _dspDigitsQty {dspDigits}, _commAnode {commAnode}
 {
+    _dspHwInstNbr = _dspHwSerialNum++;
+    _dspBuffPtr = new uint8_t[_dspDigitsQty];
     for (uint8_t i{0}; i < _dspDigitsQty; i++){
         *(_digitPosPtr + i) = i;
     }
 }
 
-SevenSegDispHw::~SevenSegDispHw()
-{
+SevenSegDispHw::~SevenSegDispHw() {
     delete [] _digitPosPtr;
+    delete [] _dspBuffPtr;
 }
 
 bool SevenSegDispHw::getCommAnnode(){
 
     return _commAnode;
+}
+
+uint8_t* SevenSegDispHw::getDspBuffPtr(){
+    
+    return _dspBuffPtr;
 }
 
 uint8_t SevenSegDispHw::getDspDigits(){
@@ -67,52 +85,30 @@ SevenSegDynamic::~SevenSegDynamic(){}
 
 bool SevenSegDynamic::begin(){
     bool result {false};
-    int frstFreeSlot{-1};
     BaseType_t tmrModResult {pdFAIL};
 
-    //Verify if the timer interrupt service was started by checking if the timer Handle is valid (and there are displays added to the pointers vector)
-    if (!_dspRfrshTmrHndl){
+    //Verify if the timer service was attached by checking if the Timer Handle is valid (also verify the timer was started)
+    if (!_svnSgDynTmrHndl){
+        //Create a valid unique Name for identifying the timer created
+        char rfrshTmrName[18];
+        char dspSerialNumChar[3]{};
+        sprintf(dspSerialNumChar, "%0.2d", (int)_dspHwInstNbr);
+        strcpy(rfrshTmrName, "DynDsp");
+        strcat(rfrshTmrName, dspSerialNumChar);
+        strcat(rfrshTmrName, "rfrsh_tmr");
       //Initialize the Display refresh timer. Considering each digit to be refreshed at 30 Hz in turn, the freq might be (Max qty of digits * 30Hz)
         _dspRfrshTmrHndl = xTimerCreate(
-            "Display Refresh",
-            pdMS_TO_TICKS((int)(1000/(30 * MAX_DIGITS_DISPLAYS))),
+            rfrshTmrName,
+            pdMS_TO_TICKS((int)(1000/(30 * _dspDigitsQty))),
             pdTRUE,  //Autoreload
             NULL,   //TimerID, data to be passed to the callback function
-            SevenSegDisplays::tmrCbRefresh  //Callback function
+            tmrCbRefresh  //Callback function
         );
-    }
-
-    if (_dspRfrshTmrHndl != NULL){
-        // Include the object's pointer to the array of pointers to be serviced by the timer Callback, 
-        // If this is the first instance created, create the array of instances in Heap    
-        if(_DynDspInstncsLstPtr == nullptr){
-            _DynDspInstncsLstPtr = new SevenSegDynamic* [_dspPtrArrLngth];
-            for(int i{0}; i < _dspPtrArrLngth; i++)
-                *(_DynDspInstncsLstPtr + i) = nullptr;
-        }            
-        //Look for a free slot in the array of pointers to displays to be refreshed or find if the display is already in the array
-        for(uint8_t i {0}; i < _dspPtrArrLngth; i++){
-            if (*(_DynDspInstncsLstPtr + i) == nullptr){    //Save the first free slot of the list in case it's needed later
-                if(frstFreeSlot == -1)
-                    frstFreeSlot = i;
-            }
-            else if (*(_DynDspInstncsLstPtr + i) == _dspInstance){
-                result = true;  //The display was included in the list of instances to keep refreshed
-                break;
-            }        
-        }
-        if(!result){    // The pointer to this object wasn't in the list, so it must be added
-            if(frstFreeSlot > -1){
-                *(_DynDspInstncsLstPtr + frstFreeSlot) = _dspInstance;
+        if((_dspRfrshTmrHndl != nullptr) && (!xTimerIsTimerActive(_dspRfrshTmrHndl))){
+            tmrModResult = xTimerStart(_dspRfrshTmrHndl, portMAX_DELAY);
+            if (tmrModResult == pdPASS)
                 result = true;
-            }
         }
-    }  
-    if(result && (!xTimerIsTimerActive(_dspRfrshTmrHndl))){
-        // The instance was added to the array, but the timer wasn't started, start the timer
-        tmrModResult = xTimerStart(_dspRfrshTmrHndl, portMAX_DELAY);
-        if (tmrModResult == pdPASS)
-            result = true;
     }
 
     return result;
@@ -190,11 +186,11 @@ bool SevenSegDynamic::stop() {
     bool result {false};
 
     for(uint8_t i {0}; i < _dspPtrArrLngth; i++){
-        if (*(_DynDspInstncsLstPtr + i) == _dspInstance){
-            *(_DynDspInstncsLstPtr + i) = nullptr;
+        if (*(_dynDspInstncsLstPtr + i) == _dspInstance){
+            *(_dynDspInstncsLstPtr + i) = nullptr;
             result = true;
         }
-        else if (*(_DynDspInstncsLstPtr + i) != nullptr){
+        else if (*(_dynDspInstncsLstPtr + i) != nullptr){
             // There are still objects pointers in the vector, so the refresh display services must continue active
             pointersFound = true;
             if(result)
@@ -204,8 +200,8 @@ bool SevenSegDynamic::stop() {
 
     if (!pointersFound){
         //There are no more display instances active, there's no point in keeping the ISR active, the timer is stopped and the interrupt service detached
-        delete [] _DynDspInstncsLstPtr;
-        _DynDspInstncsLstPtr = nullptr;
+        delete [] _dynDspInstncsLstPtr;
+        _dynDspInstncsLstPtr = nullptr;
         
         if(_dspRfrshTmrHndl){   //if the timer still exists and is running, stop and delete
             xTimerStop(_dspRfrshTmrHndl, portMAX_DELAY);

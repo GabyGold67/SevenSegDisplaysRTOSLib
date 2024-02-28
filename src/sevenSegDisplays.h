@@ -36,7 +36,7 @@ protected:
     uint8_t _dspDigitsQty{};
     SevenSegDispHw _dspUndrlHw{};
     SevenSegDisplays* _dspInstance;
-    uint8_t _dspInstNbr{0};
+    uint16_t _dspInstNbr{0};
     int32_t _dspValMax{};
     int32_t _dspValMin{};
     
