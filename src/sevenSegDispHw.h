@@ -19,7 +19,7 @@ public:
     SevenSegDispHw();
     SevenSegDispHw(uint8_t* ioPins, uint8_t dspDigits = 4, bool commAnode = true);
     ~SevenSegDispHw();    
-    bool getCommAnnode();
+    bool getCommAnode();
     uint8_t* getDspBuffPtr();
     uint8_t getDspDigits();
     bool setDigitsOrder(uint8_t* newOrderPtr);
@@ -41,7 +41,7 @@ protected:
     void send(const uint8_t &segments, const uint8_t &port);
     TimerHandle_t _svnSgDynTmrHndl{NULL};
 public:
-    SevenSegDynamic();   //No diferentiated default constructor for this class yet!!
+    SevenSegDynamic();   //No differentiated default constructor for this class yet!!
     ~SevenSegDynamic();
     bool begin();
     bool stop();
@@ -52,7 +52,7 @@ public:
 class SevenSegStatic: public SevenSegDispHw{
 
 public:
-    // SevenSegStatic();    //No diferentiated default constructor for this class yet!!
+    // SevenSegStatic();    //No differentiated default constructor for this class yet!!
     ~SevenSegStatic();
 };
 
@@ -97,6 +97,6 @@ public:
     ~SevenSegHC595Stat();
 };
 
-// Classes for the TM1638 and Max7219 under implementation need analisys
+// Classes for the TM1638 and Max7219 under implementation need analysis
 
 #endif

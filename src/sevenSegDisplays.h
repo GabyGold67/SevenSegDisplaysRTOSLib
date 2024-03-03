@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <SevenSegDispHw.h>
 
-const int MAX_DIGITS_DISPLAYS{8};
+const int MAX_DIGITS_PER_DISPLAY{8};
 const int MAX_DISPLAYS_QTY{10};
 
 class SevenSegDisplays {
@@ -13,10 +13,12 @@ class SevenSegDisplays {
     static uint8_t _dspPtrArrLngth;
     static SevenSegDisplays** _instancesLstPtr;
 
-    static void tmrCbWait(TimerHandle_t waitTmrCbArg);
-    static void tmrCbBlink(TimerHandle_t blinkTmrCbArg);
     static TimerHandle_t _blinkTmrHndl;
     static TimerHandle_t _waitTmrHndl;
+    static void tmrCbBlink(TimerHandle_t blinkTmrCbArg);
+    static void tmrCbWait(TimerHandle_t waitTmrCbArg);
+    
+    friend void tmrStaticCbBlink(TimerHandle_t blinkTmrCbArg);
 
 private:
     uint8_t _waitChar {0xBF};
@@ -24,7 +26,6 @@ private:
     bool _waiting {false};
     unsigned long _waitRate {250};
     unsigned long _waitTimer {0};
-
 protected:
     const unsigned long _minBlinkRate{100};
     const unsigned long _maxBlinkRate{2000};
@@ -46,8 +47,7 @@ protected:
     unsigned long _blinkOffRate{500};
     unsigned long _blinkOnRate{500};
     unsigned long _blinkRatesGCD{0};  //Holds the value for the minimum timer checking the change ON/OFF of the blinking, 
-                                        //saving uneeded timer interruptions, and without the need of the std::gcd function
-    
+                                        //saving unneeded timer interruptions, and without the need of the std::gcd function
     String _charSet{"0123456789AabCcdEeFGHhIiJLlnOoPqrStUuY-_=~* ."}; // for using indexOf() method
     uint8_t _charLeds[45] = {   //Values valid for a Common Anode display. For a Common Cathode display values must be logically bit negated
         0xC0, // 0
@@ -108,7 +108,6 @@ protected:
     void setAttrbts();
     void updBlinkState();
     void updWaitState();
-
 public:
     // uint8_t getDigitsQty();
     SevenSegDisplays();
@@ -122,7 +121,7 @@ public:
     bool gauge(const double &level, char label = ' ');
     uint32_t getDspValMax();
     uint32_t getDspValMin();
-    uint8_t getInstanceNbr();
+    uint16_t getInstanceNbr();
     unsigned long getMaxBlinkRate();
     unsigned long getMinBlinkRate();
     bool isBlank();
@@ -141,7 +140,6 @@ public:
     bool wait(const unsigned long &newWaitRate = 0);
     bool write(const uint8_t &segments, const uint8_t &port);
     bool write(const String &character, const uint8_t &port);
-
 };
 
 //============================================================> Class declarations separator
@@ -153,7 +151,6 @@ private:
     int _beginStartVal{0};
     bool _countRgthAlgn{true};
     bool _countZeroPad{false};
-
 public:
     ClickCounter(uint8_t ccSclk, uint8_t ccRclk, uint8_t ccDio, bool rgthAlgn = true, bool zeroPad = false, bool commAnode = true, const uint8_t dspDigits = 4);
     ~ClickCounter();
@@ -172,7 +169,6 @@ public:
     bool noBlink();
     bool setBlinkRate(const unsigned long &newOnRate, const unsigned long &newOffRate = 0);
     bool updDisplay();  //To be analyzed it's current need
-
 };
 
 #endif

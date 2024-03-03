@@ -10,7 +10,7 @@ static void  tmrStaticCbBlink(TimerHandle_t blinkTmrCbArg){
     return;
 }*/
 
-const int MAX_DIGITS_DISPLAYS{8};
+const int MAX_DIGITS_PER_DISPLAY{8};
 const uint8_t diyMore8Bits[8] {3, 2, 1, 0, 7, 6, 5, 4};
 const uint8_t noName4Bits[4] {0, 1, 2, 3};
 //---------------------------------------------------------------
@@ -25,9 +25,10 @@ SevenSegDispHw::SevenSegDispHw() {}
 
 SevenSegDispHw::SevenSegDispHw(uint8_t* ioPins, uint8_t dspDigits, bool commAnode)
 : _digitPosPtr{new uint8_t[dspDigits]}, _dspDigitsQty {dspDigits}, _commAnode {commAnode}
+
 {
     _dspHwInstNbr = _dspHwSerialNum++;
-    _dspBuffPtr = new uint8_t[_dspDigitsQty];
+    // _dspBuffPtr = new uint8_t[_dspDigitsQty];
     for (uint8_t i{0}; i < _dspDigitsQty; i++){
         *(_digitPosPtr + i) = i;
     }
@@ -38,7 +39,7 @@ SevenSegDispHw::~SevenSegDispHw() {
     delete [] _dspBuffPtr;
 }
 
-bool SevenSegDispHw::getCommAnnode(){
+bool SevenSegDispHw::getCommAnode(){
 
     return _commAnode;
 }
