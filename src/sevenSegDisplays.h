@@ -9,16 +9,17 @@ const int MAX_DISPLAYS_QTY{10};
 
 class SevenSegDisplays {
     static uint8_t _displaysCount;
-    static uint16_t _dspSerialNum;
     static uint8_t _dspPtrArrLngth;
+    static uint16_t _dspSerialNum;
     static SevenSegDisplays** _instancesLstPtr;
 
     static TimerHandle_t _blinkTmrHndl;
     static TimerHandle_t _waitTmrHndl;
-    static void tmrCbBlink(TimerHandle_t blinkTmrCbArg);
-    static void tmrCbWait(TimerHandle_t waitTmrCbArg);
+    // static void tmrCbBlink(TimerHandle_t blinkTmrCbArg);
+    // static void tmrCbWait(TimerHandle_t waitTmrCbArg);
     
     friend void tmrStaticCbBlink(TimerHandle_t blinkTmrCbArg);
+    friend void tmrStaticCbWait(TimerHandle_t waitTmrCbArg);
 
 private:
     uint8_t _waitChar {0xBF};
@@ -46,7 +47,7 @@ protected:
     unsigned long _blinkTimer{0};
     unsigned long _blinkOffRate{500};
     unsigned long _blinkOnRate{500};
-    unsigned long _blinkRatesGCD{0};  //Holds the value for the minimum timer checking the change ON/OFF of the blinking, 
+    unsigned long _blinkRatesGCD{500};  //Holds the value for the minimum timer checking the change ON/OFF of the blinking, 
                                         //saving unneeded timer interruptions, and without the need of the std::gcd function
     String _charSet{"0123456789AabCcdEeFGHhIiJLlnOoPqrStUuY-_=~* ."}; // for using indexOf() method
     uint8_t _charLeds[45] = {   //Values valid for a Common Anode display. For a Common Cathode display values must be logically bit negated
@@ -109,7 +110,7 @@ protected:
     void updBlinkState();
     void updWaitState();
 public:
-    // uint8_t getDigitsQty();
+    uint8_t getDigitsQty();
     SevenSegDisplays();
     SevenSegDisplays(SevenSegDispHw dspUndrlHw);
     ~SevenSegDisplays();
@@ -137,7 +138,8 @@ public:
     bool setBlinkRate(const unsigned long &newOnRate, const unsigned long &newOffRate = 0);
     bool setWaitChar (const char &newChar);
     bool setWaitRate(const unsigned long &newWaitRate);
-    bool wait(const unsigned long &newWaitRate = 0);
+    bool wait();
+    bool wait(const unsigned long &newWaitRate);
     bool write(const uint8_t &segments, const uint8_t &port);
     bool write(const String &character, const uint8_t &port);
 };

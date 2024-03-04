@@ -82,9 +82,9 @@ protected:
     void send();
 public:
     // SevenSegTM1637();
+    bool setBrightness(uint8_t &newBrightLevel);
     bool turnOff();
     bool turnOn();
-    bool setBrightness(uint8_t &newBrightLevel);
     ~SevenSegTM1637();
 };
 
@@ -97,6 +97,6 @@ public:
     ~SevenSegHC595Stat();
 };
 
-// Classes for the TM1638 and Max7219 under implementation need analysis
+// Classes for the TM1638, Max7219, HT16K33 under implementation need analysis
 
 #endif
