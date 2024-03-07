@@ -31,25 +31,25 @@ SevenSegDisplays::SevenSegDisplays()
 SevenSegDisplays::SevenSegDisplays(SevenSegDispHw dspUndrlHw)
 :_dspUndrlHw{dspUndrlHw}
 {
-    if(_instancesLstPtr == nullptr)
-        _instancesLstPtr = new SevenSegDisplays*[_dspPtrArrLngth](); //Initializes with all pointers value of 0, it might refuse to evaluate to nullptr, lookout!!
-    if(_displaysCount < _dspPtrArrLngth){
-        _dspDigitsQty = dspUndrlHw.getDspDigits(); //Now that we know the display size in digits, we can build the needed arrays for data
-        _dspBuffPtr  = new uint8_t[_dspDigitsQty];
-        _blinkMaskPtr = new bool[_dspDigitsQty];
-        _dspUndrlHw.setDspBuffPtr(_dspBuffPtr); //Indicate the hardware where de data to display is located
-        _dspInstNbr = _dspSerialNum++; //This value is always incremented, as it's not related to the active objects but to amount of different displays created
-        ++_displaysCount;  //This keeps the count of instantiated SevenSegDisplays objects
-        _dspInstance = this;
-        for (uint8_t i{0}; i < _dspPtrArrLngth; i++){
-            if(*(_instancesLstPtr + i) == nullptr){
-                *(_instancesLstPtr + i) = _dspInstance;
-                break;
-            }
-        }
-        setAttrbts();
-        clear();
-    }
+   if(_instancesLstPtr == nullptr)
+      _instancesLstPtr = new SevenSegDisplays*[_dspPtrArrLngth](); //Initializes with all pointers value of 0, it might refuse to evaluate to nullptr, lookout!!
+   if(_displaysCount < _dspPtrArrLngth){
+      _dspDigitsQty = dspUndrlHw.getDspDigits(); //Now that we know the display size in digits, we can build the needed arrays for data
+      _dspBuffPtr  = new uint8_t[_dspDigitsQty];
+      _blinkMaskPtr = new bool[_dspDigitsQty];
+      _dspUndrlHw.setDspBuffPtr(_dspBuffPtr); //Indicate the hardware where de data to display is located
+      _dspInstNbr = _dspSerialNum++; //This value is always incremented, as it's not related to the active objects but to amount of different displays created
+      ++_displaysCount;  //This keeps the count of instantiated SevenSegDisplays objects
+      _dspInstance = this;
+      for (uint8_t i{0}; i < _dspPtrArrLngth; i++){
+         if(*(_instancesLstPtr + i) == nullptr){
+            *(_instancesLstPtr + i) = _dspInstance;
+            break;
+         }
+      }
+      setAttrbts();
+      clear();
+   }
 }
 
 SevenSegDisplays::~SevenSegDisplays(){
