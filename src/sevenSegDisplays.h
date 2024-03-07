@@ -9,18 +9,16 @@ const int MAX_DISPLAYS_QTY{10};
 
 class SevenSegDisplays {
     static uint8_t _displaysCount;
-    static uint8_t _dspPtrArrLngth;
     static uint16_t _dspSerialNum;
+    static uint8_t _dspPtrArrLngth;
     static SevenSegDisplays** _instancesLstPtr;
 
     static TimerHandle_t _blinkTmrHndl;
     static TimerHandle_t _waitTmrHndl;
-    // static void tmrCbBlink(TimerHandle_t blinkTmrCbArg);
-    // static void tmrCbWait(TimerHandle_t waitTmrCbArg);
-    
-    friend void tmrStaticCbBlink(TimerHandle_t blinkTmrCbArg);
-    friend void tmrStaticCbWait(TimerHandle_t waitTmrCbArg);
 
+    static void tmrCbBlink(TimerHandle_t blinkTmrCbArg);
+    static void tmrCbWait(TimerHandle_t waitTmrCbArg);
+    
 private:
     uint8_t _waitChar {0xBF};
     uint8_t _waitCount {0};
@@ -110,7 +108,6 @@ protected:
     void updBlinkState();
     void updWaitState();
 public:
-    uint8_t getDigitsQty();
     SevenSegDisplays();
     SevenSegDisplays(SevenSegDispHw dspUndrlHw);
     ~SevenSegDisplays();
@@ -120,6 +117,7 @@ public:
     bool doubleGauge(const int &levelLeft, const int &levelRight, char labelLeft = ' ', char labelRight = ' ');
     bool gauge(const int &level, char label = ' ');
     bool gauge(const double &level, char label = ' ');
+    uint8_t getDigitsQty();
     uint32_t getDspValMax();
     uint32_t getDspValMin();
     uint16_t getInstanceNbr();

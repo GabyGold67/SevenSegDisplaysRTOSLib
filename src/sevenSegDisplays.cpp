@@ -8,22 +8,6 @@ SevenSegDisplays** SevenSegDisplays::_instancesLstPtr = nullptr;
 TimerHandle_t SevenSegDisplays::_blinkTmrHndl = NULL;
 TimerHandle_t SevenSegDisplays::_waitTmrHndl = NULL;
 
-void tmrStaticCbBlink(TimerHandle_t blinkTmrCbArg){
-    SevenSegDisplays* SevenSegDisplayPtr = (SevenSegDisplays*) blinkTmrCbArg;
-
-    SevenSegDisplayPtr->updBlinkState();
-
-    return;
-}
-
-void tmrStaticCbWait(TimerHandle_t waitTmrCbArg){
-    SevenSegDisplays* SevenSegDisplayPtr = (SevenSegDisplays*) waitTmrCbArg;
-
-    SevenSegDisplayPtr->updWaitState();
-
-    return;
-}
-
 SevenSegDisplays::SevenSegDisplays()
 {
 }
@@ -31,10 +15,13 @@ SevenSegDisplays::SevenSegDisplays()
 SevenSegDisplays::SevenSegDisplays(SevenSegDispHw dspUndrlHw)
 :_dspUndrlHw{dspUndrlHw}
 {
-   if(_instancesLstPtr == nullptr)
+   if(_instancesLstPtr == nullptr){
       _instancesLstPtr = new SevenSegDisplays*[_dspPtrArrLngth](); //Initializes with all pointers value of 0, it might refuse to evaluate to nullptr, lookout!!
+      for(int i{0}; i < _dspPtrArrLngth; i++)
+         *(_instancesLstPtr + i) = nullptr;
+   }
    if(_displaysCount < _dspPtrArrLngth){
-      _dspDigitsQty = dspUndrlHw.getDspDigits(); //Now that we know the display size in digits, we can build the needed arrays for data
+      _dspDigitsQty = _dspUndrlHw.getDspDigits(); //Now that we know the display size in digits, we can build the needed arrays for data
       _dspBuffPtr  = new uint8_t[_dspDigitsQty];
       _blinkMaskPtr = new bool[_dspDigitsQty];
       _dspUndrlHw.setDspBuffPtr(_dspBuffPtr); //Indicate the hardware where de data to display is located
@@ -90,7 +77,7 @@ bool SevenSegDisplays::blink(){
                   pdMS_TO_TICKS(_blinkRatesGCD),
                   pdTRUE,  //Autoreload
                   _dspInstance,   //TimerID, data to be passed to the callback function
-                  tmrStaticCbBlink  //Callback function
+                  tmrCbBlink  //Callback function
                );
          }
          if(_blinkTmrHndl && (!xTimerIsTimerActive(_blinkTmrHndl))){
@@ -171,8 +158,8 @@ void SevenSegDisplays::clear(){
       }
       for (int i{0}; i < _dspDigitsQty; i++){
          if(*(_dspBuffPtr + i) != _space){
-         *(_dspBuffPtr + i) = _space;
-         _dspBuffChng = true;    //Signal for the hardware refresh mechanism
+            *(_dspBuffPtr + i) = _space;
+            _dspBuffChng = true;    //Signal for the hardware refresh mechanism
          }
       }
    }
@@ -353,7 +340,7 @@ bool SevenSegDisplays::noBlink(){
          if(tmrModResult == pdPASS)
             tmrModResult = xTimerDelete(_blinkTmrHndl, portMAX_DELAY);
          if(tmrModResult == pdPASS)
-         _blinkTmrHndl = NULL;
+            _blinkTmrHndl = NULL;
       }
       restoreDspBuff();
       delete [] _dspAuxBuffPtr;
@@ -527,17 +514,17 @@ void SevenSegDisplays::resetBlinkMask(){
 }
 
 void SevenSegDisplays::restoreDspBuff(){
-   //  for (int i{0}; i < _dspDigitsQty; i++)
-   //      (*(_dspBuffPtr + i)) = (*(_dspAuxBuffPtr + i));
-   strncpy((char*)_dspBuffPtr, (char*)_dspAuxBuffPtr, _dspDigitsQty );
+    for (int i{0}; i < _dspDigitsQty; i++)
+        (*(_dspBuffPtr + i)) = (*(_dspAuxBuffPtr + i));
+   // strncpy((char*)_dspBuffPtr, (char*)_dspAuxBuffPtr, _dspDigitsQty );
 
     return;
 }
 
 void SevenSegDisplays::saveDspBuff(){
-    // for (int i{0}; i < _dspDigitsQty; i++)
-    //     (*(_dspAuxBuffPtr + i)) = (*(_dspBuffPtr + i));
-   strncpy((char*)_dspAuxBuffPtr, (char*)_dspBuffPtr, _dspDigitsQty );
+    for (int i{0}; i < _dspDigitsQty; i++)
+        (*(_dspAuxBuffPtr + i)) = (*(_dspBuffPtr + i));
+   // strncpy((char*)_dspAuxBuffPtr, (char*)_dspBuffPtr, _dspDigitsQty );
 
    return;
 }
@@ -654,6 +641,20 @@ bool SevenSegDisplays::setWaitRate(const unsigned long &newWaitRate){
    return result;
 }
 
+void SevenSegDisplays::tmrCbBlink(TimerHandle_t blinkTmrCbArg){
+   SevenSegDisplays* thisDisplay = (SevenSegDisplays*)blinkTmrCbArg;
+   thisDisplay->updBlinkState();
+
+   return;
+}
+
+void SevenSegDisplays::tmrCbWait(TimerHandle_t waitTmrCbArg){
+   SevenSegDisplays* thisDisplay = (SevenSegDisplays*)waitTmrCbArg;
+   thisDisplay-> updWaitState();
+
+   return;
+}
+
 void SevenSegDisplays::updBlinkState(){
     //The use of a xTimer that keeps flip-floping the _blinkShowOn value is better suited for symmetrical blinking, but not for asymmetrical cases.
     
@@ -707,6 +708,7 @@ void SevenSegDisplays::updBlinkState(){
 void SevenSegDisplays::updWaitState(){
    if (_waiting == true){
       if (_waitTimer == 0){
+         clear();
          _waitTimer = xTaskGetTickCount()/portTICK_RATE_MS;
       }
       else if((xTaskGetTickCount()/portTICK_RATE_MS - _waitTimer) > _waitRate){
@@ -717,6 +719,7 @@ void SevenSegDisplays::updWaitState(){
             else
                *(_dspBuffPtr + i) = _space;
          }
+         _dspBuffChng = true;
          _waitCount++;
          if (_waitCount == (_dspDigitsQty + 1))
             _waitCount = 0;
@@ -746,7 +749,7 @@ bool SevenSegDisplays::wait(){
                pdMS_TO_TICKS(_waitRate),
                pdTRUE,  //Autoreload
                _dspInstance,   //TimerID, data to be passed to the callback function
-               tmrStaticCbWait  //Callback function
+               tmrCbWait  //Callback function
             );
       }
       if(_waitTmrHndl && (!xTimerIsTimerActive(_waitTmrHndl))){
@@ -772,7 +775,7 @@ bool SevenSegDisplays::wait(){
 bool SevenSegDisplays::wait(const unsigned long &newWaitRate){
    bool result {true};
    
-   if (_waiting == false){
+   if (!_waiting){
       if(_waitRate != newWaitRate){
          if ((newWaitRate >= _minBlinkRate) && (newWaitRate <= _maxBlinkRate))
             _waitRate = newWaitRate;         
