@@ -1,3 +1,19 @@
+# **End of Life Warning for the SevenSegDisplaysRTOSLib**
+## The library resources will be taken off-line as soon as 2025-04-20
+
+For a long time the present repository was taken out of my own development resources as I moved on to adapt the existent library to manage a larger array of display control technologies and controller models. The changes produced through the v2.x.x have been too deep and needed for my ongoing developments that I could not ensure backwards compatibility, or enough stability in a daily basis so that it couldn't be shared without compromising other users using the the library.  
+As a result the v2.x.x library versions have been limited to in-house development projects.  
+The v3.0.0 version has the bases covered enough to ensure adding changes with no deep backwards compatibility issues in the near future, so the library is now renamed to **SevenSedDisplays_ESP32** available at it's own repository: [SevenSegDisplays_ESP32](https://github.com/GabyGold67/SevenSegDisplays_ESP32) and will be available from v3.0.0 on.  
+
+A new non-ESP32 version, **SevenSedDisplays** is expected to be released before 2025-05-31.  
+
+This repository will remain available until the date specified, then it'll be taken down.  
+
+Best Luck!  
+
+Gaby.//  
+---  
+
 # **SevenSegDisplays: A Seven Segments Led Multidigits and Multidisplay easy to use library**  
 [![arduino-library-badge](https://www.ardu-badge.com/badge/SevenSegDisplays.svg?)](https://www.ardu-badge.com/SevenSegDisplays)  
 [![PlatformIO Registry](https://badges.registry.platformio.org/packages/gabygold/library/SevenSegDisplays.svg)](https://registry.platformio.org/libraries/gabygold/SevenSegDisplays) 
